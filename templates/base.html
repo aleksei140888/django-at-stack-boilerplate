@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'uk' }}"
+      data-theme="light"
+      x-data="themeManager()"
+      x-init="initTheme()"
+      :data-theme="theme">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  {% include "partials/_meta_seo.html" %}
+
+  {# Favicon #}
+  <link rel="icon" type="image/svg+xml" href="{% load static %}{% static 'img/favicon.svg' %}">
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+  <link rel="manifest" href="{% static 'site.webmanifest' %}">
+
+  {# Vite assets #}
+  {% load static %}
+  {% if debug %}
+    <script type="module" src="http://localhost:5173/@vite/client"></script>
+    <script type="module" src="http://localhost:5173/static/src/js/main.js"></script>
+  {% else %}
+    {% include "partials/_vite_assets.html" %}
+  {% endif %}
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-base-100 text-base-content flex flex-col">
+
+  {# Skip to main content for accessibility #}
+  <a href="#main-content"
+     class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-content">
+    {% trans "Skip to main content" %}
+  </a>
+
+  {% include "partials/_navbar.html" %}
+
+  {# Flash messages #}
+  {% include "partials/_messages.html" %}
+
+  <main id="main-content" class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "partials/_footer.html" %}
+
+  {# Cookie consent banner #}
+  {% include "partials/_cookie_consent.html" %}
+
+  {# Schema.org structured data #}
+  {% block schema_org %}
+    {% include "partials/_schema_org.html" %}
+  {% endblock %}
+
+  {% block extra_body %}{% endblock %}
+</body>
+</html>

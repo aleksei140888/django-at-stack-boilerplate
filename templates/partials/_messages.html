@@ -1,0 +1,22 @@
+{% load i18n %}
+{% if messages %}
+<div
+  class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full"
+  x-data="{ visible: true }"
+  x-show="visible"
+  role="alert"
+  aria-live="polite"
+>
+  {% for message in messages %}
+    <div
+      class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %} shadow-lg"
+      x-data="{ show: true }"
+      x-show="show"
+      x-init="setTimeout(() => show = false, 5000)"
+    >
+      <span>{{ message }}</span>
+      <button @click="show = false" class="btn btn-ghost btn-xs" aria-label="{% trans 'Close' %}">✕</button>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}

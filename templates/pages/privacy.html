@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Privacy Policy" %} — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{% trans "Read our Privacy Policy to understand how we handle your personal data." %}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12 max-w-3xl">
+
+  <nav class="text-sm breadcrumbs mb-6" aria-label="{% trans 'Breadcrumb' %}">
+    <ul>
+      <li><a href="{% url 'pages:home' %}">{% trans "Home" %}</a></li>
+      <li aria-current="page">{% trans "Privacy Policy" %}</li>
+    </ul>
+  </nav>
+
+  <article class="prose prose-lg max-w-none">
+    <h1>{% trans "Privacy Policy" %}</h1>
+    <p class="lead text-base-content/70">{% trans "Last updated: " %}{% now "d F Y" %}</p>
+
+    <h2>{% trans "1. What data we collect" %}</h2>
+    <p>{% blocktrans %}We collect only data you provide directly: your email address, name, and profile information. We do not sell your data to third parties.{% endblocktrans %}</p>
+
+    <h2>{% trans "2. How we use your data" %}</h2>
+    <ul>
+      <li>{% trans "To provide and maintain our service" %}</li>
+      <li>{% trans "To send transactional emails (registration confirmation, password reset)" %}</li>
+      <li>{% trans "To send service notifications if you opted in" %}</li>
+    </ul>
+
+    <h2>{% trans "3. Cookies" %}</h2>
+    <p>{% blocktrans %}We use strictly necessary cookies for session management and optional analytics cookies. See our <a href="/cookies/">Cookie Policy</a> for details.{% endblocktrans %}</p>
+
+    <h2>{% trans "4. Your rights" %}</h2>
+    <p>{% trans "You have the right to access, correct, or delete your personal data at any time. To exercise these rights, please contact us or use the account deletion feature in your profile." %}</p>
+
+    <h2>{% trans "5. Data retention" %}</h2>
+    <p>{% trans "We retain your data as long as your account is active or as required by law. Deactivated accounts are anonymized after 90 days." %}</p>
+
+    <h2>{% trans "6. Contact" %}</h2>
+    <p>{% blocktrans %}For privacy-related questions, please <a href="/contact/">contact us</a>.{% endblocktrans %}</p>
+  </article>
+</div>
+{% endblock %}

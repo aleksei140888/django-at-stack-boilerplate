@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ SITE_NAME }} — {% trans "Production-ready Django boilerplate" %}{% endblock %}
+{% block meta_description %}{% trans "Django + Alpine.js + Tailwind CSS + DaisyUI. Production-ready SSR boilerplate with authentication, SEO, and Docker." %}{% endblock %}
+
+{% block og_type %}website{% endblock %}
+
+{% block schema_org %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "{{ SITE_NAME }}",
+  "url": "{{ SITE_URL }}",
+  "description": "{% trans 'Django + Alpine.js + Tailwind CSS + DaisyUI — production-ready boilerplate.' %}",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "{{ SITE_URL }}/search/?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+{# Hero #}
+<section class="hero min-h-[60vh] bg-gradient-to-br from-primary/10 to-secondary/10">
+  <div class="hero-content text-center">
+    <div class="max-w-2xl">
+      <h1 class="text-5xl font-bold mb-6">
+        Django <span class="text-primary">AT</span> Stack
+      </h1>
+      <p class="text-xl text-base-content/70 mb-8">
+        {% trans "Django + Alpine.js + Tailwind CSS + DaisyUI — production-ready boilerplate for SSR web apps." %}
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        {% if not user.is_authenticated %}
+          <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg">
+            {% trans "Get started" %}
+          </a>
+          <a href="{% url 'accounts:login' %}" class="btn btn-outline btn-lg">
+            {% trans "Log in" %}
+          </a>
+        {% else %}
+          <a href="{% url 'accounts:profile' %}" class="btn btn-primary btn-lg">
+            {% trans "My profile" %}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{# Features #}
+<section class="py-20 px-4">
+  <div class="container mx-auto max-w-5xl">
+    <h2 class="text-3xl font-bold text-center mb-12">{% trans "What's included" %}</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      {% with features=features_list %}
+      <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
+        <div class="card-body">
+          <h3 class="card-title text-lg">
+            <span class="text-primary text-2xl" aria-hidden="true">🐍</span>
+            Django 5 + DRF
+          </h3>
+          <p class="text-base-content/70 text-sm">{% trans "Full-featured Django backend with REST Framework for APIs." %}</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
+        <div class="card-body">
+          <h3 class="card-title text-lg">
+            <span class="text-primary text-2xl" aria-hidden="true">🎨</span>
+            Tailwind 4 + DaisyUI
+          </h3>
+          <p class="text-base-content/70 text-sm">{% trans "Utility-first CSS with ready-made components and dark/light themes." %}</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
+        <div class="card-body">
+          <h3 class="card-title text-lg">
+            <span class="text-primary text-2xl" aria-hidden="true">⚡</span>
+            Alpine.js
+          </h3>
+          <p class="text-base-content/70 text-sm">{% trans "Lightweight JS for interactivity. No SPA complexity needed." %}</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
+        <div class="card-body">
+          <h3 class="card-title text-lg">
+            <span class="text-primary text-2xl" aria-hidden="true">🔐</span>
+            {% trans "Full auth" %}
+          </h3>
+          <p class="text-base-content/70 text-sm">{% trans "Registration, login, password reset, profile management, GDPR consent." %}</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
+        <div class="card-body">
+          <h3 class="card-title text-lg">
+            <span class="text-primary text-2xl" aria-hidden="true">🔍</span>
+            SEO-ready
+          </h3>
+          <p class="text-base-content/70 text-sm">{% trans "Sitemap, robots.txt, Open Graph, schema.org, canonical URLs." %}</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
+        <div class="card-body">
+          <h3 class="card-title text-lg">
+            <span class="text-primary text-2xl" aria-hidden="true">🐳</span>
+            Docker-ready
+          </h3>
+          <p class="text-base-content/70 text-sm">{% trans "Docker + docker-compose for dev and production with PostgreSQL." %}</p>
+        </div>
+      </div>
+      {% endwith %}
+    </div>
+  </div>
+</section>
+
+{# Alpine.js demo — interactive search #}
+<section class="py-16 px-4 bg-base-200">
+  <div class="container mx-auto max-w-2xl text-center">
+    <h2 class="text-2xl font-bold mb-4">{% trans "Alpine.js example: live search" %}</h2>
+    <p class="text-base-content/60 mb-8 text-sm">{% trans "Type to filter items below — no page reload." %}</p>
+
+    <div x-data="searchDemo()">
+      <input
+        type="search"
+        x-model="query"
+        placeholder="{% trans 'Search features...' %}"
+        class="input input-bordered w-full mb-4"
+        aria-label="{% trans 'Search features' %}"
+      >
+      <ul class="space-y-2 text-left">
+        <template x-for="item in filtered" :key="item">
+          <li class="badge badge-outline badge-lg p-4" x-text="item"></li>
+        </template>
+        <template x-if="filtered.length === 0">
+          <li class="text-base-content/50">{% trans "No results found." %}</li>
+        </template>
+      </ul>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

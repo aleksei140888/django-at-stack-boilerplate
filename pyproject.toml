@@ -1,0 +1,42 @@
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+extend-exclude = '''
+/(
+  migrations
+  | .venv
+  | staticfiles
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+known_django = ["django"]
+known_drf = ["rest_framework"]
+known_first_party = ["apps", "config"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "DRF", "FIRSTPARTY", "LOCALFOLDER"]
+skip_glob = ["*/migrations/*", ".venv/*"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+addopts = [
+    "--reuse-db",
+    "-v",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["apps"]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/test_*.py",
+]
+
+[tool.coverage.report]
+skip_empty = true
+show_missing = true

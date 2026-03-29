@@ -1,0 +1,61 @@
+{% extends "accounts/base_auth.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Log in" %} — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{% trans "Log in to your account" %}{% endblock %}
+
+{% block auth_title %}{% trans "Log in" %}{% endblock %}
+
+{% block auth_content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-error mb-4" role="alert">
+      {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="form-control mb-4">
+    <label class="label" for="{{ form.username.id_for_label }}">
+      <span class="label-text">{{ form.username.label }}</span>
+    </label>
+    {{ form.username }}
+    {% if form.username.errors %}
+      <label class="label"><span class="label-text-alt text-error">{{ form.username.errors.0 }}</span></label>
+    {% endif %}
+  </div>
+
+  <div class="form-control mb-4">
+    <label class="label" for="{{ form.password.id_for_label }}">
+      <span class="label-text">{{ form.password.label }}</span>
+      <a href="{% url 'accounts:password_reset' %}" class="label-text-alt link link-primary">
+        {% trans "Forgot password?" %}
+      </a>
+    </label>
+    {{ form.password }}
+    {% if form.password.errors %}
+      <label class="label"><span class="label-text-alt text-error">{{ form.password.errors.0 }}</span></label>
+    {% endif %}
+  </div>
+
+  <div class="form-control mb-6">
+    <label class="label cursor-pointer justify-start gap-3">
+      {{ form.remember_me }}
+      <span class="label-text">{{ form.remember_me.label }}</span>
+    </label>
+  </div>
+
+  <button type="submit" class="btn btn-primary w-full">{% trans "Log in" %}</button>
+</form>
+{% endblock %}
+
+{% block auth_footer %}
+<p class="text-center mt-4 text-sm">
+  {% trans "Don't have an account?" %}
+  <a href="{% url 'accounts:register' %}" class="link link-primary">{% trans "Sign up" %}</a>
+</p>
+{% endblock %}

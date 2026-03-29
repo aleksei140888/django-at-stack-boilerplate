@@ -1,0 +1,88 @@
+{% load i18n %}
+{% load static %}
+<header class="navbar bg-base-200 shadow-sm sticky top-0 z-40" role="banner">
+  <div class="container mx-auto px-4 flex items-center justify-between w-full">
+
+    {# Logo / Brand #}
+    <div class="navbar-start">
+      <a href="{% url 'pages:home' %}" class="btn btn-ghost text-xl font-bold" aria-label="{{ SITE_NAME }} — {% trans 'Home' %}">
+        {{ SITE_NAME }}
+      </a>
+    </div>
+
+    {# Desktop nav #}
+    <nav class="navbar-center hidden lg:flex" aria-label="{% trans 'Main navigation' %}">
+      <ul class="menu menu-horizontal px-1 gap-1">
+        <li><a href="{% url 'pages:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">{% trans "Home" %}</a></li>
+        <li><a href="{% url 'pages:contact' %}" class="{% if request.resolver_match.url_name == 'contact' %}active{% endif %}">{% trans "Contact" %}</a></li>
+      </ul>
+    </nav>
+
+    {# Right side actions #}
+    <div class="navbar-end gap-2">
+      {# Dark/light toggle #}
+      <button
+        class="btn btn-ghost btn-circle"
+        @click="toggleTheme()"
+        :aria-label="theme === 'dark' ? '{% trans 'Switch to light mode' %}' : '{% trans 'Switch to dark mode' %}'"
+        :title="theme === 'dark' ? '{% trans 'Light mode' %}' : '{% trans 'Dark mode' %}'"
+      >
+        <span x-show="theme !== 'dark'" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </span>
+        <span x-show="theme === 'dark'" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+        </span>
+      </button>
+
+      {# Auth buttons #}
+      {% if user.is_authenticated %}
+        <div class="dropdown dropdown-end">
+          <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar" aria-label="{% trans 'User menu' %}">
+            <div class="w-8 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm font-bold">
+              {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" alt="{{ user.get_short_name }}">
+              {% else %}
+                {{ user.get_short_name|first|upper }}
+              {% endif %}
+            </div>
+          </div>
+          <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-200 rounded-box z-50 mt-3 w-52 p-2 shadow">
+            <li><a href="{% url 'accounts:profile' %}">{% trans "Profile" %}</a></li>
+            <li><a href="{% url 'accounts:password_change' %}">{% trans "Change password" %}</a></li>
+            <li><hr class="my-1"></li>
+            <li>
+              <form method="post" action="{% url 'accounts:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="w-full text-left text-error">{% trans "Log out" %}</button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="btn btn-ghost btn-sm">{% trans "Log in" %}</a>
+        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-sm">{% trans "Sign up" %}</a>
+      {% endif %}
+
+      {# Mobile hamburger #}
+      <div class="dropdown dropdown-end lg:hidden">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle" aria-label="{% trans 'Open menu' %}">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+          </svg>
+        </div>
+        <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-200 rounded-box z-50 mt-3 w-52 p-2 shadow">
+          <li><a href="{% url 'pages:home' %}">{% trans "Home" %}</a></li>
+          <li><a href="{% url 'pages:contact' %}">{% trans "Contact" %}</a></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</header>

@@ -1,0 +1,96 @@
+/* Tailwind CSS v4 — single import, no config file needed */
+@import "tailwindcss";
+
+/* DaisyUI plugin */
+@plugin "daisyui" {
+  themes: light, dark;
+}
+
+/* ===== Base styles ===== */
+@layer base {
+  /* Smooth font rendering */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Focus styles for accessibility */
+  :focus-visible {
+    outline: 2px solid oklch(var(--p));
+    outline-offset: 2px;
+  }
+
+  /* Typography base */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* Form inputs using DaisyUI classes — styled consistently */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="url"],
+  input[type="tel"],
+  input[type="number"],
+  textarea,
+  select {
+    @apply input input-bordered w-full;
+  }
+
+  input[type="checkbox"] {
+    @apply checkbox;
+  }
+
+  input[type="radio"] {
+    @apply radio;
+  }
+}
+
+/* ===== Utilities ===== */
+@layer utilities {
+  /* Prose styles for article content */
+  .prose {
+    color: oklch(var(--bc));
+  }
+
+  .prose h1,
+  .prose h2,
+  .prose h3 {
+    color: oklch(var(--bc));
+  }
+
+  .prose a {
+    color: oklch(var(--p));
+    text-decoration: underline;
+  }
+
+  .prose a:hover {
+    color: oklch(var(--pf));
+  }
+
+  /* Screen reader only */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .focus\:not-sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: inherit;
+    margin: inherit;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+}

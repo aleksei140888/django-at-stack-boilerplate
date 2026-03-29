@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Terms of Use" %} — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{% trans "Terms and conditions for using our service." %}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12 max-w-3xl">
+
+  <nav class="text-sm breadcrumbs mb-6" aria-label="{% trans 'Breadcrumb' %}">
+    <ul>
+      <li><a href="{% url 'pages:home' %}">{% trans "Home" %}</a></li>
+      <li aria-current="page">{% trans "Terms of Use" %}</li>
+    </ul>
+  </nav>
+
+  <article class="prose prose-lg max-w-none">
+    <h1>{% trans "Terms of Use" %}</h1>
+    <p class="text-base-content/70">{% trans "Last updated: " %}{% now "d F Y" %}</p>
+
+    <h2>{% trans "1. Acceptance" %}</h2>
+    <p>{% trans "By using this service you agree to these terms. If you do not agree, do not use the service." %}</p>
+
+    <h2>{% trans "2. Use of service" %}</h2>
+    <p>{% trans "You may use this service for lawful purposes only. You are responsible for your account and all activity under it." %}</p>
+
+    <h2>{% trans "3. Intellectual property" %}</h2>
+    <p>{% trans "All content and software on this site is owned by us or our licensors and protected by copyright laws." %}</p>
+
+    <h2>{% trans "4. Limitation of liability" %}</h2>
+    <p>{% trans "The service is provided 'as is' without warranties. We are not liable for any indirect or consequential damages." %}</p>
+
+    <h2>{% trans "5. Changes to terms" %}</h2>
+    <p>{% trans "We may update these terms at any time. Continued use of the service after changes constitutes acceptance." %}</p>
+
+    <h2>{% trans "6. Contact" %}</h2>
+    <p>{% blocktrans %}For questions about these terms, please <a href="/contact/">contact us</a>.{% endblocktrans %}</p>
+  </article>
+</div>
+{% endblock %}
