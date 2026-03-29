@@ -6,11 +6,13 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 
 from apps.core.sitemaps import sitemaps
+from apps.core.views import health_page
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("apps.accounts.urls")),
     path("api/v1/", include("apps.core.api_urls")),
+    path("health/", health_page, name="health"),
     path(
         "sitemap.xml",
         sitemap,

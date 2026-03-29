@@ -1,4 +1,16 @@
 from django.shortcuts import render
+from django.utils.translation import gettext_lazy as _
+
+
+def health_page(request):
+    return render(
+        request,
+        "core/health.html",
+        {
+            "page_title": _("System Health"),
+            "noindex": True,
+        },
+    )
 
 
 def handler404(request, exception=None):

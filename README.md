@@ -10,7 +10,7 @@
 | Frontend | Alpine.js 3.x |
 | Styling | Tailwind CSS 4.x + DaisyUI 4.x |
 | Build | Vite 6 |
-| Database | PostgreSQL 16 |
+| Database | PostgreSQL 17 |
 | Cache / Queue | Redis 7 + Celery |
 | Infra | Docker + docker-compose |
 | Static files | WhiteNoise |
@@ -38,8 +38,10 @@
 - [x] Contact form with email sending
 - [x] Docker + docker-compose (dev + prod configs)
 - [x] PostgreSQL + Redis + Celery
-- [x] Static files via WhiteNoise
+- [x] Static files via WhiteNoise; media files via **AWS S3** (optional, auto-activated)
 - [x] Environment config via django-environ
+- [x] `/health/` page — live dashboard (Alpine.js, auto-refresh every 60 s)
+- [x] `/api/v1/health/` endpoint — database, Redis, Celery, storage; extensible registry
 - [x] Error pages — 404, 403, 500
 - [x] Security headers middleware
 - [x] Health check API endpoint
@@ -251,6 +253,70 @@ const data = await apiFetch("/api/v1/endpoint/", {
   body: JSON.stringify({ key: "value" }),
 });
 ```
+
+## Health check
+
+### Dashboard page
+
+Open **`/health/`** in a browser — shows live status of every registered component with auto-refresh every 60 seconds.
+
+### API endpoint
+
+```
+GET /api/v1/health/
+```
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2024-01-01T12:00:00+00:00",
+  "checks": {
+    "database": { "status": "ok", "latency_ms": 3.1, "vendor": "postgresql" },
+    "redis":    { "status": "ok", "latency_ms": 0.8 },
+    "storage":  { "status": "ok", "backend": "s3", "bucket": "my-bucket" },
+    "celery":   { "status": "degraded", "detail": "no active workers" }
+  }
+}
+```
+
+HTTP 200 for `ok` / `degraded`, HTTP 503 for `error`.
+
+### Adding a custom check
+
+Register from anywhere in the codebase:
+
+```python
+from apps.core.health import HealthCheck
+
+@HealthCheck.register("stripe")
+def check_stripe():
+    import stripe
+    stripe.Balance.retrieve()          # raises on error
+    return {"status": "ok"}
+
+@HealthCheck.register("my_api")
+def check_my_api():
+    import requests
+    r = requests.get("https://api.example.com/ping", timeout=2)
+    r.raise_for_status()
+    return {"status": "ok", "response_ms": r.elapsed.total_seconds() * 1000}
+```
+
+## AWS S3 (media storage)
+
+Set the following env vars to switch media uploads from local disk to S3.
+Static files always use WhiteNoise regardless.
+
+```env
+AWS_STORAGE_BUCKET_NAME=my-bucket
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_S3_REGION_NAME=eu-central-1
+# optional — CloudFront or custom domain:
+AWS_S3_CUSTOM_DOMAIN=cdn.example.com
+```
+
+When `AWS_STORAGE_BUCKET_NAME` is set, `MEDIA_URL` is automatically pointed at the bucket (or custom domain), and the storage health check verifies S3 connectivity on every `/api/v1/health/` call.
 
 ## Production deployment
 

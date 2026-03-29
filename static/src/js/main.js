@@ -122,6 +122,56 @@ Alpine.data("toast", (message, type = "info", duration = 4000) => ({
   },
 }));
 
+/**
+ * System health dashboard — polls /api/v1/health/ every 60 s.
+ */
+Alpine.data("healthDashboard", () => ({
+  status: null,
+  checks: {},
+  lastUpdated: null,
+  loading: false,
+  fetchError: null,
+  countdown: 60,
+  _timer: null,
+  _countdownTimer: null,
+
+  async init() {
+    await this.refresh();
+    this._startCountdown();
+  },
+
+  async refresh() {
+    this.loading = true;
+    this.fetchError = null;
+    this._resetCountdown();
+    try {
+      const data = await apiFetch("/api/v1/health/");
+      this.status = data.status;
+      this.checks = data.checks ?? {};
+      this.lastUpdated = new Date(data.timestamp).toLocaleTimeString();
+    } catch (err) {
+      this.fetchError = err.message || "Failed to fetch health status";
+    } finally {
+      this.loading = false;
+    }
+  },
+
+  _resetCountdown() {
+    clearInterval(this._countdownTimer);
+    this.countdown = 60;
+  },
+
+  _startCountdown() {
+    this._countdownTimer = setInterval(async () => {
+      this.countdown -= 1;
+      if (this.countdown <= 0) {
+        await this.refresh();
+        this.countdown = 60;
+      }
+    }, 1000);
+  },
+}));
+
 // Start Alpine
 Alpine.start();
 
