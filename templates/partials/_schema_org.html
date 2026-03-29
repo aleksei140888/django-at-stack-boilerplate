@@ -1,0 +1,15 @@
+{% load i18n %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "{% firstof schema_type 'WebPage' %}",
+  "name": "{% if page_title %}{{ page_title }} — {{ SITE_NAME }}{% else %}{{ SITE_NAME }}{% endif %}",
+  "url": "{{ canonical_url }}",
+  "description": "{% firstof meta_description '' %}",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "{{ SITE_NAME }}",
+    "url": "{{ SITE_URL }}"
+  }
+}
+</script>

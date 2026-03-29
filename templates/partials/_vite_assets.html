@@ -1,0 +1,7 @@
+{% load static %}
+{# This partial is replaced with actual Vite manifest-generated tags in production.
+   For a simple setup, Vite outputs hashed filenames into static/dist/manifest.json.
+   Use django-vite or a custom tag for full manifest support.
+   Below is a fallback for when static files are compiled manually. #}
+<link rel="stylesheet" href="{% static 'dist/main.css' %}">
+<script type="module" src="{% static 'dist/main.js' %}"></script>

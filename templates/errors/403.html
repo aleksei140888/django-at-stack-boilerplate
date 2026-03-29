@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}403 — {% trans "Access denied" %} — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center px-4">
+  <div class="text-center max-w-md">
+    <p class="text-9xl font-black text-warning/20 select-none leading-none">403</p>
+    <h1 class="text-3xl font-bold mt-4 mb-4">{% trans "Access denied" %}</h1>
+    <p class="text-base-content/60 mb-8">{% trans "You don't have permission to access this page." %}</p>
+    <a href="{% url 'pages:home' %}" class="btn btn-primary">{% trans "Go to homepage" %}</a>
+  </div>
+</div>
+{% endblock %}

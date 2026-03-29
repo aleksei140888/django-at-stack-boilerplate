@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Cookie Policy" %} — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{% trans "Learn about how we use cookies on our website." %}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12 max-w-3xl">
+
+  <nav class="text-sm breadcrumbs mb-6" aria-label="{% trans 'Breadcrumb' %}">
+    <ul>
+      <li><a href="{% url 'pages:home' %}">{% trans "Home" %}</a></li>
+      <li aria-current="page">{% trans "Cookie Policy" %}</li>
+    </ul>
+  </nav>
+
+  <article class="prose prose-lg max-w-none">
+    <h1>{% trans "Cookie Policy" %}</h1>
+    <p class="text-base-content/70">{% trans "Last updated: " %}{% now "d F Y" %}</p>
+
+    <h2>{% trans "What are cookies?" %}</h2>
+    <p>{% trans "Cookies are small text files stored on your device. They help us remember your preferences and improve your experience." %}</p>
+
+    <h2>{% trans "Cookies we use" %}</h2>
+
+    <h3>{% trans "Strictly necessary" %}</h3>
+    <p>{% trans "These cookies are required for the service to function. They include session cookies and CSRF protection tokens. You cannot opt out." %}</p>
+
+    <div class="overflow-x-auto">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{% trans "Cookie" %}</th>
+            <th>{% trans "Purpose" %}</th>
+            <th>{% trans "Duration" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>sessionid</code></td>
+            <td>{% trans "Session management" %}</td>
+            <td>{% trans "30 days" %}</td>
+          </tr>
+          <tr>
+            <td><code>csrftoken</code></td>
+            <td>{% trans "CSRF protection" %}</td>
+            <td>{% trans "1 year" %}</td>
+          </tr>
+          <tr>
+            <td><code>cookie_consent</code></td>
+            <td>{% trans "Stores your cookie consent choice" %}</td>
+            <td>{% trans "1 year" %}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>{% trans "Managing cookies" %}</h2>
+    <p>{% trans "You can manage or delete cookies through your browser settings. Note that disabling certain cookies may affect the functionality of this site." %}</p>
+  </article>
+</div>
+{% endblock %}

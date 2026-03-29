@@ -1,0 +1,64 @@
+{% extends "accounts/base_auth.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Create account" %} — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{% trans "Create a new account" %}{% endblock %}
+
+{% block auth_title %}{% trans "Create account" %}{% endblock %}
+
+{% block auth_content %}
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-error mb-4" role="alert">
+      {% for error in form.non_field_errors %}
+        <p>{{ error }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% for field in form %}
+    {% if field.name != 'gdpr_consent' %}
+      <div class="form-control mb-4">
+        <label class="label" for="{{ field.id_for_label }}">
+          <span class="label-text">{{ field.label }}{% if field.field.required %} <span class="text-error">*</span>{% endif %}</span>
+        </label>
+        {{ field }}
+        {% if field.help_text %}
+          <label class="label"><span class="label-text-alt text-base-content/60">{{ field.help_text }}</span></label>
+        {% endif %}
+        {% if field.errors %}
+          <label class="label"><span class="label-text-alt text-error">{{ field.errors.0 }}</span></label>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  {# GDPR consent #}
+  <div class="form-control mb-6">
+    <label class="label cursor-pointer justify-start gap-3 items-start">
+      {{ form.gdpr_consent }}
+      <span class="label-text text-sm">
+        {% blocktrans trimmed %}
+          I agree to the <a href="/privacy/" class="link link-primary" target="_blank">Privacy Policy</a>
+          and <a href="/terms/" class="link link-primary" target="_blank">Terms of Use</a>.
+          <span class="text-error">*</span>
+        {% endblocktrans %}
+      </span>
+    </label>
+    {% if form.gdpr_consent.errors %}
+      <label class="label"><span class="label-text-alt text-error">{{ form.gdpr_consent.errors.0 }}</span></label>
+    {% endif %}
+  </div>
+
+  <button type="submit" class="btn btn-primary w-full">{% trans "Create account" %}</button>
+</form>
+{% endblock %}
+
+{% block auth_footer %}
+<p class="text-center mt-4 text-sm">
+  {% trans "Already have an account?" %}
+  <a href="{% url 'accounts:login' %}" class="link link-primary">{% trans "Log in" %}</a>
+</p>
+{% endblock %}
