@@ -1,10 +1,9 @@
 .DEFAULT_GOAL := help
 .PHONY: help install install-dev up down build logs shell db-shell migrate makemigrations \
         superuser test lint format check collectstatic npm-install npm-dev npm-build \
-        celery flush reset-db
+        celery flush lock
 
-PYTHON      := python
-MANAGE      := $(PYTHON) manage.py
+MANAGE      := uv run python manage.py
 DC          := docker-compose
 DC_EXEC     := $(DC) exec web
 SETTINGS    := config.settings.dev
@@ -24,15 +23,25 @@ help: ## Show this help message
 # ============================================================
 # Setup
 # ============================================================
-install: ## Install Python production dependencies
-	pip install -r requirements/base.txt
+install: ## Install production dependencies (uv sync)
+	uv sync --extra prod
 
 install-dev: ## Install all dev dependencies
-	pip install -r requirements/dev.txt
-	pre-commit install
+	uv sync --extra dev
+	uv run pre-commit install
+
+lock: ## Regenerate uv.lock from pyproject.toml
+	uv lock
+
+lock-upgrade: ## Upgrade all packages and regenerate uv.lock
+	uv lock --upgrade
 
 npm-install: ## Install Node.js dependencies
 	npm install
+
+env-copy: ## Copy .env.example to .env
+	cp .env.example .env
+	@echo ".env created — edit it before starting."
 
 # ============================================================
 # Docker
@@ -100,11 +109,6 @@ collectstatic: ## Collect static files
 flush: ## Flush the database (WARNING: destroys all data)
 	$(MANAGE) flush --no-input --settings=$(SETTINGS)
 
-reset-db: ## Drop and recreate the database (WARNING: destructive!)
-	$(DC) exec db psql -U postgres -c "DROP DATABASE IF EXISTS django_at_stack;"
-	$(DC) exec db psql -U postgres -c "CREATE DATABASE django_at_stack;"
-	$(MAKE) migrate-docker
-
 # ============================================================
 # Frontend
 # ============================================================
@@ -118,11 +122,11 @@ npm-build: ## Build frontend assets for production
 # Code quality
 # ============================================================
 format: ## Format code with black and isort
-	black apps/ config/
-	isort apps/ config/
+	uv run black apps/ config/
+	uv run isort apps/ config/
 
 lint: ## Run flake8 linter
-	flake8 apps/ config/
+	uv run flake8 apps/ config/
 
 check: format lint ## Format and lint (run both)
 
@@ -135,10 +139,10 @@ check-docker: ## Run linting inside Docker
 # Tests
 # ============================================================
 test: ## Run tests
-	pytest
+	uv run pytest
 
 test-cov: ## Run tests with coverage report
-	pytest --cov=apps --cov-report=html --cov-report=term-missing
+	uv run pytest --cov=apps --cov-report=html --cov-report=term-missing
 
 test-docker: ## Run tests in Docker
 	$(DC_EXEC) pytest
@@ -147,7 +151,7 @@ test-docker: ## Run tests in Docker
 # Celery
 # ============================================================
 celery: ## Start Celery worker
-	celery -A config.celery worker -l info
+	uv run celery -A config.celery worker -l info
 
 celery-docker: ## Start Celery worker in Docker
 	$(DC_EXEC) celery -A config.celery worker -l info
@@ -156,7 +160,3 @@ celery-docker: ## Start Celery worker in Docker
 # Production helpers
 # ============================================================
 deploy: npm-build collectstatic ## Build assets and collect static (pre-deploy step)
-
-env-copy: ## Copy .env.example to .env
-	cp .env.example .env
-	@echo ".env created — edit it before starting."

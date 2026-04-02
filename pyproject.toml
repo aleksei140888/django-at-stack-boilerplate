@@ -1,10 +1,55 @@
+[project]
+name = "django-at-stack"
+version = "0.1.0"
+description = "Django + Alpine.js + Tailwind CSS + DaisyUI — production-ready boilerplate"
+requires-python = ">=3.12"
+
+dependencies = [
+    "Django==5.1.7",
+    "djangorestframework==3.15.2",
+    "django-environ==0.11.2",
+    "psycopg2-binary==2.9.10",
+    "Pillow==11.1.0",
+    "whitenoise==6.8.2",
+    "django-cors-headers==4.6.0",
+    "django-allauth==65.3.0",
+    "django-extensions==3.2.3",
+    "django-filter==24.3",
+    "celery==5.4.0",
+    "redis==5.2.1",
+    "django-redis==5.4.0",
+    "gunicorn==23.0.0",
+    "django-storages==1.14.4",
+    "boto3==1.35.81",
+]
+
+[project.optional-dependencies]
+prod = [
+    "sentry-sdk==2.19.2",
+]
+dev = [
+    "black==24.10.0",
+    "flake8==7.1.1",
+    "isort==5.13.2",
+    "flake8-django==1.4",
+    "flake8-bugbear==24.10.31",
+    "pre-commit==4.0.1",
+    "django-debug-toolbar==4.4.6",
+    "factory-boy==3.3.1",
+    "pytest==8.3.4",
+    "pytest-django==4.9.0",
+    "pytest-cov==6.0.0",
+]
+
+# ── Tool configs ───────────────────────────────────────────────────────────────
+
 [tool.black]
 line-length = 100
 target-version = ["py312"]
 extend-exclude = '''
 /(
-  migrations
-  | .venv
+    migrations
+  | \.venv
   | staticfiles
 )/
 '''
@@ -21,22 +66,16 @@ skip_glob = ["*/migrations/*", ".venv/*"]
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings.dev"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
-addopts = [
-    "--reuse-db",
-    "-v",
-]
-filterwarnings = [
-    "ignore::DeprecationWarning",
-]
+addopts = ["-v"]
+filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.coverage.run]
 source = ["apps"]
-omit = [
-    "*/migrations/*",
-    "*/tests/*",
-    "*/test_*.py",
-]
+omit = ["*/migrations/*", "*/tests/*", "*/test_*.py"]
 
 [tool.coverage.report]
 skip_empty = true
 show_missing = true
+
+[tool.uv]
+dev-dependencies = []   # use [project.optional-dependencies] dev instead

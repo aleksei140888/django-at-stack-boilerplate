@@ -1,19 +1,7 @@
-FROM python:3.12-slim AS base
+# ── uv ────────────────────────────────────────────────────────────────────────
+FROM ghcr.io/astral-sh/uv:0.5 AS uv
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
-
-WORKDIR /app
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# ---- Node stage for frontend build ----
+# ── Node / frontend build ─────────────────────────────────────────────────────
 FROM node:22-slim AS frontend
 
 WORKDIR /app
@@ -23,20 +11,34 @@ RUN npm ci
 
 COPY vite.config.js ./
 COPY static/src ./static/src
-
 RUN npm run build
 
-# ---- Python deps ----
-FROM base AS python-deps
+# ── Python base ───────────────────────────────────────────────────────────────
+FROM python:3.12-slim AS base
 
-COPY requirements/base.txt ./requirements/base.txt
-RUN pip install -r requirements/base.txt
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
 
-# ---- Development ----
-FROM python-deps AS dev
+WORKDIR /app
 
-COPY requirements/dev.txt ./requirements/dev.txt
-RUN pip install -r requirements/dev.txt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=uv /uv /uvx /usr/local/bin/
+
+# ── Development ───────────────────────────────────────────────────────────────
+FROM base AS dev
+
+# Install deps with dev extras (cached layer)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    uv sync --frozen --extra dev
 
 COPY . .
 COPY --from=frontend /app/static/dist ./static/dist
@@ -44,11 +46,14 @@ COPY --from=frontend /app/static/dist ./static/dist
 EXPOSE 8000
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
-# ---- Production ----
-FROM python-deps AS prod
+# ── Production ────────────────────────────────────────────────────────────────
+FROM base AS prod
 
-COPY requirements/prod.txt ./requirements/prod.txt
-RUN pip install -r requirements/prod.txt
+# Install deps with prod extras only (no dev tools)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    uv sync --frozen --extra prod --no-dev
 
 COPY . .
 COPY --from=frontend /app/static/dist ./static/dist

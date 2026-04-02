@@ -29,3 +29,9 @@ repos:
         additional_dependencies:
           - flake8-django
           - flake8-bugbear
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.5.11
+    hooks:
+      # Keep uv.lock in sync with pyproject.toml on every commit
+      - id: uv-lock

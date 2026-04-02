@@ -6,18 +6,18 @@ This file provides guidance to Claude Code when working in this repository.
 
 Django AT Stack — production-ready boilerplate for SSR web apps.
 
-**Stack:** Django 5.1 + DRF · Alpine.js 3 · Tailwind CSS 4 · DaisyUI 4 · Vite 6 · PostgreSQL · Redis · Celery · Docker
+**Stack:** Django 5.1 + DRF · Alpine.js 3 · Tailwind CSS 4 · DaisyUI 4 · Vite 6 · PostgreSQL 17 · Redis · Celery · Docker
 
 ## Development setup
 
 ```bash
 cp .env.example .env          # edit DATABASE_URL, SECRET_KEY
-make install-dev               # Python deps
+make install-dev               # uv sync --extra dev + pre-commit install
 make npm-install               # Node deps
 make migrate                   # run migrations
 make superuser                 # create admin user
 make npm-dev                   # start Vite (port 5173)
-python manage.py runserver     # start Django (port 8000)
+uv run python manage.py runserver  # start Django (port 8000)
 ```
 
 Or with Docker:
@@ -25,6 +25,22 @@ Or with Docker:
 ```bash
 docker-compose up --build
 ```
+
+## Package management — uv
+
+Dependencies live in `pyproject.toml`. The lockfile `uv.lock` is committed.
+
+| Command | Description |
+|---|---|
+| `uv sync --extra dev` | Install all deps including dev extras |
+| `uv sync --extra prod` | Install base + Sentry (production) |
+| `uv lock` | Regenerate `uv.lock` after editing `pyproject.toml` |
+| `uv lock --upgrade` | Upgrade all packages |
+| `uv add <pkg>` | Add a new dependency |
+| `uv add --optional dev <pkg>` | Add a dev dependency |
+| `uv run <cmd>` | Run a command inside the managed venv |
+
+**Do not** create or edit `requirements/*.txt` — the project uses `pyproject.toml` exclusively.
 
 ## Common commands
 
@@ -40,6 +56,8 @@ docker-compose up --build
 | `make npm-dev` | Vite dev server |
 | `make npm-build` | Build frontend for prod |
 | `make shell` | Django shell |
+| `make lock` | Regenerate uv.lock |
+| `make lock-upgrade` | Upgrade all packages |
 
 ## Project structure
 
@@ -57,6 +75,8 @@ config/
   celery.py
 templates/
   base.html              — root layout with dark/light theme
+  core/
+    health.html          — system health dashboard (Alpine.js, auto-refresh 60 s)
   partials/
     _meta_seo.html       — SEO meta tags, OG, Twitter Card, canonical
     _schema_org.html     — schema.org JSON-LD
@@ -69,8 +89,11 @@ templates/
   errors/                — 404, 403, 500
   email/                 — transactional email templates
 static/src/
-  js/main.js   — Alpine.js components (themeManager, cookieConsent, searchDemo, modal, toast)
+  js/main.js   — Alpine.js components (themeManager, cookieConsent, searchDemo,
+                 modal, toast, healthDashboard)
   css/main.css — Tailwind CSS 4 + DaisyUI
+pyproject.toml — all Python dependencies + tool configs (black, isort, pytest)
+uv.lock        — committed lockfile
 ```
 
 ## Key conventions
@@ -106,6 +129,12 @@ static/src/
 - Theme is controlled via `data-theme` on `<html>` — do not override inline
 - Form inputs automatically get DaisyUI styles via base CSS layer rules
 
+### Health checks
+
+- Add new checks in any app with `@HealthCheck.register("name")` from `apps.core.health`
+- Check functions return `{"status": "ok"|"degraded"|"error", ...extra_fields}`
+- Raising any exception automatically marks the check as `"error"`
+
 ### SEO checklist for new pages
 
 - [ ] Set `page_title` and `meta_description` in view context
@@ -119,8 +148,8 @@ static/src/
 ```bash
 make test          # all tests
 make test-cov      # with coverage report (htmlcov/)
-pytest apps/accounts/tests.py  # single file
-pytest -k "login"              # by name pattern
+uv run pytest apps/accounts/tests.py  # single file
+uv run pytest -k "login"              # by name pattern
 ```
 
 Tests use SQLite in memory by default (no Docker needed). Fixtures are in `conftest.py`.
@@ -128,7 +157,7 @@ Tests use SQLite in memory by default (no Docker needed). Fixtures are in `conft
 ## Adding a new app
 
 ```bash
-python manage.py startapp myapp apps/myapp
+uv run python manage.py startapp myapp apps/myapp
 ```
 
 Then:
@@ -136,6 +165,15 @@ Then:
 2. Create `apps/myapp/urls.py` with `app_name`
 3. Include in `config/urls.py`
 4. Add to `apps/core/sitemaps.py` if it has public pages
+
+## Adding a Python dependency
+
+```bash
+uv add <package>                    # production dep
+uv add --optional dev <package>     # dev-only dep
+uv add --optional prod <package>    # production extras (e.g. sentry)
+# uv.lock is updated automatically — commit both files
+```
 
 ## Environment variables
 
@@ -151,7 +189,7 @@ For production additionally set:
 ```
 SENTRY_DSN=...
 REDIS_URL=...
-AWS_* (if using S3)
+AWS_STORAGE_BUCKET_NAME=...  (optional, enables S3 for media)
 ```
 
 ## Deployment
@@ -163,3 +201,4 @@ docker-compose -f docker-compose.prod.yml up -d
 
 Production uses Gunicorn (4 workers) behind Nginx with SSL termination.
 Static files served by WhiteNoise (Django) and Nginx directly.
+uv manages the production venv inside the Docker image via `uv sync --frozen --extra prod`.

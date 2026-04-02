@@ -15,6 +15,7 @@
 | Infra | Docker + docker-compose |
 | Static files | WhiteNoise |
 | Auth | django-allauth + custom User model |
+| Package manager | uv |
 
 ## Why this stack?
 
@@ -48,6 +49,7 @@
 - [x] Code quality — black, isort, flake8, pre-commit
 - [x] Tests — pytest with fixtures and smoke tests
 - [x] Makefile with all common dev commands
+- [x] **uv** — fast Python package manager, `pyproject.toml` + `uv.lock`
 
 ## Quick start
 
@@ -64,12 +66,13 @@ Open http://localhost:8000
 
 ### Local development
 
-```bash
-# Python
-python -m venv .venv && source .venv/bin/activate
-make install-dev
+Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) and Node.js 22+.
 
-# Node
+```bash
+# Python deps (creates .venv automatically)
+make install-dev       # uv sync --extra dev + pre-commit install
+
+# Node deps
 make npm-install
 
 # Environment
@@ -81,8 +84,8 @@ make migrate
 make superuser
 
 # Start servers (two terminals)
-make npm-dev               # Vite on :5173
-python manage.py runserver # Django on :8000
+make npm-dev                       # Vite on :5173
+uv run python manage.py runserver  # Django on :8000
 ```
 
 ## Project structure
@@ -343,6 +346,27 @@ SESSION_COOKIE_SECURE=True
 CSRF_COOKIE_SECURE=True
 SENTRY_DSN=https://...
 ```
+
+## Dependency management (uv)
+
+All Python dependencies are declared in `pyproject.toml`. The lockfile `uv.lock` is committed to the repo.
+
+```bash
+# Install
+make install-dev        # base + dev extras
+make install            # base + prod extras (Sentry)
+
+# Add / remove packages
+uv add requests                      # add production dep
+uv add --optional dev pytest-xdist   # add dev dep
+uv remove requests                   # remove dep
+
+# Update
+make lock               # regenerate uv.lock (keeps versions)
+make lock-upgrade       # upgrade all packages to latest
+```
+
+Avoid editing `uv.lock` manually. Commit both `pyproject.toml` and `uv.lock` together.
 
 ## Code quality
 

@@ -39,6 +39,9 @@ env/
 venv/
 ENV/
 
+# uv cache (the lockfile uv.lock IS committed)
+.uv-cache/
+
 # IDE
 .idea/
 .vscode/
