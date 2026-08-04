@@ -67,7 +67,11 @@ package = false
 [tool.black]
 line-length = 100
 target-version = ["py312"]
-extend-exclude = '''
+# force-exclude, not just extend-exclude: pre-commit passes file paths
+# explicitly, and black only applies extend-exclude to paths it discovered
+# itself — migrations would be reformatted by the hook and left alone by
+# `make beautify`, so the same files kept coming back dirty.
+force-exclude = '''
 /(
     migrations
   | \.venv

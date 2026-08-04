@@ -17,6 +17,9 @@ SETTINGS      := config.settings.dev
 DEMO_SETTINGS := config.settings.demo
 DEMO_DB       := db.demo.sqlite3
 PROFILE       ?= small
+# Everything the formatter and linter own — kept in one place so the Makefile,
+# pre-commit and CI cannot drift apart.
+PY_PATHS      := apps/ config/ scripts/ conftest.py manage.py
 
 # ============================================================
 # Help
@@ -193,11 +196,11 @@ npm-build: ## Build frontend assets for production
 # Code quality
 # ============================================================
 beautify: ## Format code with black and isort
-	uv run black apps/ config/ scripts/
-	uv run isort apps/ config/ scripts/
+	uv run black $(PY_PATHS)
+	uv run isort $(PY_PATHS)
 
 lint: ## Run the flake8 linter
-	uv run flake8 apps/ config/ scripts/
+	uv run flake8 $(PY_PATHS)
 
 check: beautify lint ## Format and lint
 

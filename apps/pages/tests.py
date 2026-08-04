@@ -1,5 +1,6 @@
 import pytest
 
+from django.core import mail
 from django.urls import reverse
 
 
@@ -33,3 +34,34 @@ class TestPages:
         response = client.get("/robots.txt")
         assert response.status_code == 200
         assert b"User-agent" in response.content
+
+
+@pytest.mark.django_db
+class TestContactForm:
+    def test_valid_submission_sends_mail_and_redirects(self, client, settings):
+        response = client.post(
+            reverse("pages:contact"),
+            {"name": "Jane", "email": "jane@example.com", "message": "Hello there"},
+        )
+
+        assert response.status_code == 302
+        assert response["Location"] == reverse("pages:contact_done")
+        assert len(mail.outbox) == 1
+        assert mail.outbox[0].to == [settings.CONTACT_EMAIL]
+
+    def test_message_body_carries_the_sender(self, client):
+        client.post(
+            reverse("pages:contact"),
+            {"name": "Jane", "email": "jane@example.com", "message": "Hello there"},
+        )
+
+        assert "jane@example.com" in mail.outbox[0].body
+
+    def test_invalid_submission_re_renders_with_errors(self, client):
+        response = client.post(
+            reverse("pages:contact"), {"name": "", "email": "not-an-email", "message": ""}
+        )
+
+        assert response.status_code == 200
+        assert response.context["form"].errors
+        assert not mail.outbox

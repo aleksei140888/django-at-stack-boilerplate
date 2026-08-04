@@ -1,37 +1,62 @@
+# Installed by `make install-dev`. Without this line `pre-commit install` only
+# wires the pre-commit stage, and any commit-msg hook below silently does not
+# exist on the developer's machine.
+default_install_hook_types: [pre-commit, commit-msg]
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-json
+      - id: check-toml
       - id: check-merge-conflict
       - id: debug-statements
       - id: check-added-large-files
         args: ["--maxkb=1000"]
 
   - repo: https://github.com/psf/black
-    rev: 24.10.0
+    rev: 26.5.1
     hooks:
       - id: black
         language_version: python3.12
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 8.0.1
     hooks:
       - id: isort
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+    rev: 7.3.0
     hooks:
       - id: flake8
         additional_dependencies:
-          - flake8-django
           - flake8-bugbear
 
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.5.11
+    rev: 0.12.1
     hooks:
       # Keep uv.lock in sync with pyproject.toml on every commit
       - id: uv-lock
+
+  - repo: local
+    hooks:
+      # A version drift otherwise only shows up when auto-tag.yml fails — that is
+      # after the push to main, when fixing it costs a separate commit.
+      - id: version-sync
+        name: Version matches across pyproject/package.json/package-lock
+        entry: python scripts/check_version_sync.py
+        language: system
+        pass_filenames: false
+        files: ^(pyproject\.toml|package\.json|package-lock\.json)$
+
+      # OPT-IN: uncomment to forbid AI authorship trailers and footers in commit
+      # messages (docs/conventions.md). Off by default — the template takes no
+      # position on whether they belong in your history.
+      # - id: no-ai-attribution
+      #   name: No AI authorship in the commit message
+      #   entry: python scripts/check_no_ai_attribution.py
+      #   language: system
+      #   stages: [commit-msg]

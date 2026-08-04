@@ -1,0 +1,176 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    # ready_for_review is needed because draft PRs are skipped below: without it
+    # the check would never appear after the draft flag comes off.
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# A new push to a PR branch cancels the previous, unfinished run. Pushes to main
+# are never cancelled: tagging and deployment hang off each of those commits, so
+# the group is keyed on the sha and every commit gets its own.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: Test & Lint
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      SECRET_KEY: github-actions-secret-key
+      DEBUG: "False"
+
+    steps:
+      # Actions are pinned by commit sha, not by tag: a tag can be moved to
+      # different code, and this workflow has repository write access.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - id: changes
+        uses: ./.github/actions/docs-only-changes
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: "3.12"
+
+      # Cheap and dependency-free, so it is not gated on docs_only: it is also
+      # the check that catches a version bump made in only one of the files.
+      - name: Check version sync
+        run: python scripts/check_version_sync.py
+
+      # Opt-in gate, see docs/conventions.md. Uncomment to forbid AI authorship
+      # trailers in commit messages.
+      # - name: Check commit messages for AI attribution
+      #   if: github.event_name == 'pull_request'
+      #   env:
+      #     BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      #     HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      #   run: |
+      #     git log --format='%B' "$BASE_SHA..$HEAD_SHA" > "$RUNNER_TEMP/messages.txt"
+      #     python scripts/check_no_ai_attribution.py "$RUNNER_TEMP/messages.txt"
+
+      - name: Install uv
+        if: steps.changes.outputs.docs_only != 'true'
+        uses: astral-sh/setup-uv@f0ec1fc3b38f5e7cd731bb6ce540c5af426746bb # v6.1.0
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        if: steps.changes.outputs.docs_only != 'true'
+        run: uv sync
+
+      - name: Check formatting (black)
+        if: steps.changes.outputs.docs_only != 'true'
+        run: uv run black --check apps/ config/ scripts/ conftest.py manage.py
+
+      - name: Check imports (isort)
+        if: steps.changes.outputs.docs_only != 'true'
+        run: uv run isort --check-only apps/ config/ scripts/ conftest.py manage.py
+
+      - name: Lint (flake8)
+        if: steps.changes.outputs.docs_only != 'true'
+        run: uv run flake8 apps/ config/ scripts/ conftest.py manage.py
+
+      - name: Check for missing migrations
+        if: steps.changes.outputs.docs_only != 'true'
+        # A model change without its migration passes every test and then fails
+        # on deploy, which is the worst possible moment to discover it.
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Run tests
+        if: steps.changes.outputs.docs_only != 'true'
+        run: uv run pytest --cov=apps --cov-report=term-missing
+
+      - name: Set up Node
+        if: steps.changes.outputs.docs_only != 'true'
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: "22"
+
+      - name: Install Node dependencies
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm ci
+
+      # Pure JS logic is tested with the built-in node --test — no bundler,
+      # no Vitest/Jest in the dependency tree.
+      - name: Run JS tests
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm test
+
+      - name: Build frontend
+        if: steps.changes.outputs.docs_only != 'true'
+        run: npm run build
+
+      # collectstatic with the manifest storage is what catches a template
+      # referencing an asset that the build does not produce.
+      - name: Collect static files
+        if: steps.changes.outputs.docs_only != 'true'
+        run: uv run python manage.py collectstatic --noinput --settings=config.settings.prod
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.prod
+          SECRET_KEY: github-actions-secret-key
+          ALLOWED_HOSTS: example.com
+
+  seed:
+    name: Demo seed (smoke)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - id: changes
+        uses: ./.github/actions/docs-only-changes
+
+      - name: Set up Python
+        if: steps.changes.outputs.docs_only != 'true'
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        if: steps.changes.outputs.docs_only != 'true'
+        uses: astral-sh/setup-uv@f0ec1fc3b38f5e7cd731bb6ce540c5af426746bb # v6.1.0
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        if: steps.changes.outputs.docs_only != 'true'
+        run: uv sync
+
+      # The seeder touches the models of every domain, so it fails exactly when
+      # the schema moved and something was not updated: a forgotten migration, a
+      # renamed field, a new NOT NULL without a default. The cheapest integration
+      # test in the project.
+      - name: Migrate demo database
+        if: steps.changes.outputs.docs_only != 'true'
+        run: uv run python manage.py migrate --settings=config.settings.demo --noinput
+
+      - name: Seed demo data
+        if: steps.changes.outputs.docs_only != 'true'
+        run: uv run python manage.py seed_demo --settings=config.settings.demo --profile=medium
+
+      # The second run checks idempotency; --fresh checks that deleting demo data
+      # does not trip over a PROTECT relation.
+      - name: Re-run the seeder (idempotency)
+        if: steps.changes.outputs.docs_only != 'true'
+        run: uv run python manage.py seed_demo --settings=config.settings.demo --profile=medium
+
+      - name: Reseed from scratch
+        if: steps.changes.outputs.docs_only != 'true'
+        run: uv run python manage.py seed_demo --settings=config.settings.demo --profile=medium --fresh
+
+      - name: Clear demo data
+        if: steps.changes.outputs.docs_only != 'true'
+        run: uv run python manage.py seed_demo --settings=config.settings.demo --clear

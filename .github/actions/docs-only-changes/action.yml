@@ -1,0 +1,52 @@
+name: Detect docs-only changes
+description: >-
+  Sets docs_only=true when nothing but .md files changed in the range.
+
+  This is a composite action rather than a separate job on purpose: a job that
+  produces one flag still spins up a runner, and GitHub bills whole minutes per
+  job — it cost a full billable minute on every run while saving something only
+  on the rare docs-only change. As a step inside each job, the job still reports
+  its status (which matters for required checks in branch protection) and only
+  the expensive steps are skipped.
+
+  Requires checkout with fetch-depth: 0 — otherwise the base commit is not local.
+
+outputs:
+  docs_only:
+    description: "true when every changed file is a .md"
+    value: ${{ steps.filter.outputs.docs_only }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check if only .md files changed
+      id: filter
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        PR_BASE: ${{ github.event.pull_request.base.sha }}
+        PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        PUSH_BEFORE: ${{ github.event.before }}
+        PUSH_HEAD: ${{ github.sha }}
+      run: |
+        if [ "$EVENT_NAME" = "pull_request" ]; then
+          base="$PR_BASE"
+          head="$PR_HEAD"
+        elif [ "$PUSH_BEFORE" != "0000000000000000000000000000000000000000" ]; then
+          base="$PUSH_BEFORE"
+          head="$PUSH_HEAD"
+        else
+          echo "No previous commit to diff against, running full checks."
+          echo "docs_only=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        changed_files=$(git diff --name-only "$base" "$head")
+        echo "Changed files:"
+        echo "$changed_files"
+
+        if [ -z "$changed_files" ] || echo "$changed_files" | grep -qvE '\.md$'; then
+          echo "docs_only=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "docs_only=true" >> "$GITHUB_OUTPUT"
+        fi
