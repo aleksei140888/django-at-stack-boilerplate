@@ -1,12 +1,26 @@
 {% load i18n static %}<!DOCTYPE html>
-{% comment %}
-The theme is fixed: DESIGN.md specifies dark only, so there is no switcher and
-nothing to restore from localStorage before first paint.
-{% endcomment %}
-<html lang="{{ LANGUAGE_CODE|default:'en' }}" data-theme="cybertribal">
+<html lang="{{ LANGUAGE_CODE|default:'en' }}"
+      data-theme="cybertribal"
+      x-data="themeManager()"
+      x-init="initTheme()">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  {% comment %}
+  Resolves the theme before the first frame. Alpine boots after paint, so without
+  this the page renders once in the wrong theme and then corrects itself — a
+  full-page flash. Kept in sync with themeManager in main.js; the duplication is
+  the price of running before any module loads.
+  {% endcomment %}
+  <script>
+    (function () {
+      var saved = localStorage.getItem("theme");
+      var prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+      var theme = saved || (prefersLight ? "cybertribal-light" : "cybertribal");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
 
   {% include "partials/_meta_seo.html" %}
 

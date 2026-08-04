@@ -44,7 +44,8 @@ Exact versions live in `pyproject.toml` and `package.json`.
 - A complete visual system — [`DESIGN.md`](DESIGN.md) — implemented as tokens:
   palette, typography, motion, component classes
 - Self-hosted fonts, inline SVG icons, no external requests
-- Dark-only Cyber-Tribal theme; retheming is one block of CSS
+- Dark Cyber-Tribal theme with a light companion, switcher included, resolved
+  before first paint; retheming is one block of CSS
   ([`docs/design.md`](docs/design.md))
 - Tests for the rules that are checkable: no emoji in the UI, no `h-screen`,
   no DaisyUI 4 class names that silently stopped applying

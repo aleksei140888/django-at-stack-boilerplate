@@ -2,7 +2,7 @@
 name = "django-at-stack"
 # YYYY.M.PATCH — the same string must appear in package.json and package-lock.json.
 # `make version-check` (also a pre-commit hook) fails the commit when they drift.
-version = "2026.8.1"
+version = "2026.8.2"
 description = "Django + Alpine.js + Tailwind CSS + DaisyUI — production-ready boilerplate"
 requires-python = ">=3.12"
 

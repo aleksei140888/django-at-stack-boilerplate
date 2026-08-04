@@ -5,7 +5,8 @@ typography, motion, component rules, and the do/don't list. That file is the
 source of truth; this one explains where each part of it lives in the code and
 what to do when you change it.
 
-**Cyber-Tribal**, dark only. Ancient geometry pushed through a digital filter:
+**Cyber-Tribal**, dark by default with a light companion. Ancient geometry pushed
+through a digital filter:
 hard grids under organic curves, neon on near-black, generous motion.
 
 ## Where it lives
@@ -15,7 +16,8 @@ hard grids under organic curves, neon on near-black, generous motion.
 | Palette, radii, fonts, motion tokens | `static/src/css/main.css` — the `@plugin "daisyui/theme"` and `@theme` blocks |
 | Buttons, cards, form fields | the `@layer components` block in the same file |
 | Glow, grid, gradient, cascade | the `@layer utilities` block |
-| Fixed theme attribute | `templates/base.html` |
+| Theme resolution before first paint | `templates/base.html` (inline script) |
+| Theme switcher | `themeManager` in `static/src/js/main.js`, button in `partials/_navbar.html` |
 | Mechanical rules | `apps/core/tests/test_design.py` |
 
 Templates use semantic classes (`bg-base-200`, `text-primary`, `.btn-tribal`) and
@@ -122,25 +124,60 @@ icon's job in the confirmation pages.
 Use the named utilities, never an invented number: `z-sticky-nav` (100),
 `z-overlay` (200), `z-modal` (300), `z-toast` (500).
 
-## Dark only
+## Two themes
 
-`<html data-theme="cybertribal">` is fixed in `base.html` and there is no theme
-switcher — DESIGN.md specifies no light mode. To add one:
+DESIGN.md specifies dark only. The template ships a light companion anyway,
+because a boilerplate that cannot follow a user's OS preference is a boilerplate
+people patch on day one. **Dark stays the design**: it is the default, it is what
+the palette was drawn for, and light is derived from it rather than the reverse.
 
-1. Add a second `@plugin "daisyui/theme"` block with `default: true` and
-   `color-scheme: light`.
-2. Restore a `themeManager` Alpine component that writes `data-theme` and
-   persists the choice, plus the inline pre-paint script in `<head>` that applies
-   the saved value before Alpine boots (otherwise the first frame is wrong).
-3. Drop the `test_no_light_theme_toggle_remains` guard in
-   `apps/core/tests/test_design.py`.
+| Theme | When |
+|---|---|
+| `cybertribal` | default; used when no choice is stored and the OS expresses no preference |
+| `cybertribal-light` | stored choice, or `prefers-color-scheme: light` |
+
+Resolution order is the same in two places — `themeManager` in `main.js` and an
+inline script in `<head>`. The duplication is deliberate: Alpine boots after
+first paint, so without the inline copy the page renders once in the wrong theme
+and visibly corrects itself. A guard asserts the inline script comes before the
+bundle.
+
+`themeManager` also rewrites `<meta name="theme-color">`, which cannot follow
+`data-theme` from CSS.
+
+### What the light theme drops
+
+Every colour keeps its hue and loses lightness until it clears 4.5:1 on the
+off-white base — `#00FFFF` on `#F5F2FA` is 1.2:1, which is not a colour, it is a
+suggestion of one. Electric Cyan becomes `#007A8C`, Blacklight Purple `#8A00BA`,
+Neon Magenta `#B8009E`, and Deep Indigo is unchanged because it was already the
+darkest of the six.
+
+The glows come off entirely rather than being dimmed, because a glow needs
+darkness to read as light — on pale surfaces the same effect is grey haze:
+
+- the blacklight wash behind `<body>` → nothing
+- `.glow-primary` / `.glow-accent` → a hairline border plus a soft neutral shadow
+- `.text-glow` → no text shadow
+- `.hover-lift` → a plain shadow instead of a coloured halo
+
+What stays is the structure: the tribal grid (geometry, not light, redrawn in
+dark ink at 6%), the radii, the type, the motion, the asymmetric layouts.
+
+Surfaces are off-white with a violet cast, never `#FFFFFF` — DESIGN.md's do-not
+list, and a guard checks it.
+
+To go back to dark-only: delete the light `@plugin` block and its
+`[data-theme="cybertribal-light"]` overrides, remove the toggle from the navbar,
+and fix up the theme tests in `apps/core/tests/test_design.py`.
 
 ## What the tests check
 
 `apps/core/tests/test_design.py` covers only what a reviewer cannot reliably see:
 no emoji, no `h-screen`/`min-h-screen`, no DaisyUI 4 class names that silently
-stopped applying, the theme is declared and dark, the radius is 8px, reduced
-motion is honoured, and every palette colour is still present.
+stopped applying, both themes declared with dark as the default, the light theme
+free of glows and of pure white, the radius 8px, reduced motion honoured, every
+palette colour present, and the switcher wired up before first paint.
 
 Whether a layout is genuinely asymmetric, or a page reads as Cyber-Tribal at all,
 is a judgement call and stays with the reviewer — plus `make demo-smoke`, which
@@ -152,7 +189,8 @@ fails on horizontal overflow at 360 and 390px and leaves screenshots in `var/`.
 2. Replace `--font-display` / `--font-body` / `--font-mono`.
 3. Adjust `--radius-*` and the motion tokens.
 4. Regenerate `static/img/` (favicon, apple-touch-icon, og-default).
-5. Update `<meta name="theme-color">` in `partials/_meta_seo.html`.
+5. Update `<meta name="theme-color">` in `partials/_meta_seo.html` and the
+   `THEME_COLORS` map in `main.js`.
 6. Replace `DESIGN.md` with your own spec, and update the guards in
    `test_design.py` that reference the old palette.
 

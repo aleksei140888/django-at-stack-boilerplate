@@ -28,9 +28,8 @@
   themes: false;
 }
 
-/* The design is dark-only ("Light/Dark: ✗ No / ✓ Full"), so there is one theme
-   and no switcher. Adding a light variant later means a second @plugin block
-   with `default: true` and re-enabling the toggle — see docs/design.md. */
+/* Dark is the design (DESIGN.md), and the default when nothing else is known.
+   The light variant below is a companion, not an inversion — see docs/design.md. */
 @plugin "daisyui/theme" {
   name: "cybertribal";
   default: true;
@@ -83,6 +82,55 @@
   --noise: 0;
 }
 
+/* Light companion.
+   The neon is not carried over: #00FFFF on off-white is a 1.2:1 contrast ratio,
+   and a glow only reads as a glow against darkness. Each colour keeps its hue
+   and loses enough lightness to clear 4.5:1 on base-100 — so the palette is
+   recognisably the same, and the surfaces do the talking instead of the light. */
+@plugin "daisyui/theme" {
+  name: "cybertribal-light";
+  color-scheme: light;
+
+  /* Off-white with a violet cast, never #FFFFFF (DESIGN.md's do-not list). */
+  --color-base-100: oklch(96.6% 0.011 303.1); /* #F5F2FA */
+  --color-base-200: oklch(93.3% 0.019 302.2); /* #EBE6F4 */
+  --color-base-300: oklch(88.2% 0.035 302.0); /* #DCD3EC */
+  --color-base-content: oklch(19.8% 0.051 293.6); /* #17102A */
+
+  /* Electric Cyan, taken down to a readable teal (4.6:1). */
+  --color-primary: oklch(53.2% 0.093 212.5); /* #007A8C */
+  --color-primary-content: oklch(96.6% 0.011 303.1);
+
+  --color-secondary: oklch(51.9% 0.096 169.1); /* #197A5F */
+  --color-secondary-content: oklch(96.6% 0.011 303.1);
+
+  --color-accent: oklch(48.0% 0.239 312.8); /* #8A00BA */
+  --color-accent-content: oklch(96.6% 0.011 303.1);
+
+  /* Deep Indigo needs no adjustment — it was already the darkest of the six. */
+  --color-neutral: oklch(33.9% 0.179 301.7); /* #4B0082 */
+  --color-neutral-content: oklch(96.6% 0.011 303.1);
+
+  --color-info: oklch(53.2% 0.093 212.5);
+  --color-info-content: oklch(96.6% 0.011 303.1);
+  --color-success: oklch(51.9% 0.096 169.1);
+  --color-success-content: oklch(96.6% 0.011 303.1);
+  --color-warning: oklch(54.9% 0.183 37.3); /* #C43A00 */
+  --color-warning-content: oklch(96.6% 0.011 303.1);
+  --color-error: oklch(52.6% 0.203 16.6); /* #C4123F */
+  --color-error-content: oklch(96.6% 0.011 303.1);
+
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.5rem;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
 @theme {
   /* Azonix first: drop the file into static/fonts and add the @font-face block
      from docs/design.md, and every display surface picks it up. Orbitron is the
@@ -92,7 +140,8 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   /* Palette members DaisyUI has no slot for, kept as tokens so decoration can
-     reference them by name instead of by hex. */
+     reference them by name instead of by hex. Dark values; the light theme
+     overrides them below. */
   --color-tribal-magenta: oklch(70.2% 0.322 328.4); /* #FF00FF */
   --color-tribal-solar: oklch(66.0% 0.229 35.4); /* #FF4500 */
 
@@ -514,6 +563,84 @@
     clip: auto;
     white-space: normal;
   }
+}
+
+/* ===== Light theme: neon off =====
+   Everything here exists because a glow needs darkness to read as light. On the
+   off-white surfaces the same effects turn into grey haze, so they are replaced
+   by the flat equivalents — borders and soft shadows — rather than dimmed. */
+[data-theme="cybertribal-light"] {
+  --color-tribal-magenta: oklch(53.4% 0.236 336.4); /* #B8009E */
+  --color-tribal-solar: oklch(54.9% 0.183 37.3); /* #C43A00 */
+}
+
+[data-theme="cybertribal-light"] body {
+  /* No blacklight wash behind the page — just the flat surface. */
+  background-image: none;
+}
+
+[data-theme="cybertribal-light"] .glow-primary {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--color-primary) 25%, transparent),
+    0 2px 12px rgb(0 0 0 / 0.06);
+}
+
+[data-theme="cybertribal-light"] .glow-accent {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--color-accent) 22%, transparent),
+    0 2px 12px rgb(0 0 0 / 0.06);
+}
+
+[data-theme="cybertribal-light"] .text-glow {
+  text-shadow: none;
+}
+
+[data-theme="cybertribal-light"] .hover-lift:hover {
+  /* A coloured halo becomes a smudge on white; a plain shadow reads as lift. */
+  box-shadow: 0 0.75rem 1.75rem -1rem rgb(0 0 0 / 0.35);
+}
+
+[data-theme="cybertribal-light"] .card-tribal {
+  background-color: var(--color-base-100);
+  border-color: color-mix(in oklch, var(--color-base-content) 12%, transparent);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 0.06);
+}
+
+[data-theme="cybertribal-light"] .tribal-mask [opacity] {
+  /* The mask's stroke opacities are tuned for glowing lines on black. The same
+     values on a pale surface leave it almost invisible, so the ink is brought
+     back up — the darkened palette carries the contrast that the glow used to. */
+  opacity: 0.8;
+}
+
+[data-theme="cybertribal-light"] .tribal-grid {
+  /* The grid stays — it is geometry, not light — at a weight that survives
+     being drawn in a dark ink on a pale surface. */
+  background-image:
+    linear-gradient(
+      color-mix(in oklch, var(--color-base-content) 6%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in oklch, var(--color-base-content) 6%, transparent) 1px,
+      transparent 1px
+    );
+}
+
+[data-theme="cybertribal-light"] input[type="text"],
+[data-theme="cybertribal-light"] input[type="email"],
+[data-theme="cybertribal-light"] input[type="password"],
+[data-theme="cybertribal-light"] input[type="search"],
+[data-theme="cybertribal-light"] input[type="url"],
+[data-theme="cybertribal-light"] input[type="tel"],
+[data-theme="cybertribal-light"] input[type="number"],
+[data-theme="cybertribal-light"] input[type="date"],
+[data-theme="cybertribal-light"] input[type="file"],
+[data-theme="cybertribal-light"] textarea,
+[data-theme="cybertribal-light"] select {
+  background-color: var(--color-base-100);
+  border-color: color-mix(in oklch, var(--color-base-content) 20%, transparent);
 }
 
 @keyframes enter {

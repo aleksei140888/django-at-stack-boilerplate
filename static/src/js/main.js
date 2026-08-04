@@ -12,10 +12,59 @@ export { apiFetch, getCsrfToken };
 
 // Every component must be registered before Alpine.start(): a component
 // referenced by x-data that was registered afterwards is silently inert.
-//
-// There is no theme manager here: the Cyber-Tribal system in DESIGN.md is
-// dark-only, so <html data-theme> is fixed in base.html. docs/design.md has the
-// three steps to bring a switcher back if a second theme is ever added.
+
+// Theme names must match the @plugin "daisyui/theme" blocks in main.css. An
+// unknown value here leaves data-theme pointing at a theme that does not exist,
+// and the page renders with no colours at all.
+export const THEMES = { dark: "cybertribal", light: "cybertribal-light" };
+
+// Kept in sync with the browser-chrome colour, which cannot follow data-theme
+// from CSS — it is a meta tag and has to be written by hand.
+const THEME_COLORS = { [THEMES.dark]: "#08040F", [THEMES.light]: "#F5F2FA" };
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", THEME_COLORS[theme] ?? THEME_COLORS[THEMES.dark]);
+}
+
+/**
+ * Theme switcher.
+ *
+ * The stored choice wins; without one, the OS preference decides, and dark is
+ * the fallback when the OS expresses none — dark is the design, light is its
+ * companion. The same resolution runs in an inline script in <head> before
+ * first paint, otherwise the first frame is drawn in the wrong theme.
+ */
+Alpine.data("themeManager", () => ({
+  theme: THEMES.dark,
+
+  initTheme() {
+    const saved = localStorage.getItem("theme");
+    const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+    this.theme = saved ?? (prefersLight ? THEMES.light : THEMES.dark);
+    applyTheme(this.theme);
+
+    // Follow the OS only while the user has not made an explicit choice.
+    window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", (event) => {
+      if (!localStorage.getItem("theme")) {
+        this.theme = event.matches ? THEMES.light : THEMES.dark;
+        applyTheme(this.theme);
+      }
+    });
+  },
+
+  get isDark() {
+    return this.theme === THEMES.dark;
+  },
+
+  toggleTheme() {
+    this.theme = this.isDark ? THEMES.light : THEMES.dark;
+    localStorage.setItem("theme", this.theme);
+    applyTheme(this.theme);
+  },
+}));
+
 
 /**
  * Cookie consent banner.

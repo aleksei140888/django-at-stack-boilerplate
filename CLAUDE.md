@@ -78,8 +78,10 @@ its classes are silently dropped from the bundle.
 code is [`docs/design.md`](docs/design.md). Templates use semantic classes
 (`bg-base-200`, `text-primary`) and the component classes (`.btn-tribal`,
 `.card-tribal`, `.field-label`) — never raw hex, so retheming stays one block of
-CSS. The theme is dark-only and fixed on `<html>`; there is no switcher. No emoji
-in the UI (inline SVG icons instead), no `h-screen` (use `min-h-[100dvh]`), and
+CSS. Two themes — `cybertribal` (default) and `cybertribal-light`, switched by
+`themeManager` and resolved before first paint by an inline script in `<head>`;
+add a colour to one theme and you owe the other a value. No emoji in the UI
+(inline SVG icons instead), no `h-screen` (use `min-h-[100dvh]`), and
 `apps/core/tests/test_design.py` enforces the rules that are checkable.
 
 **Version.** `YYYY.M.PATCH`, identical in `pyproject.toml`, `package.json` and
