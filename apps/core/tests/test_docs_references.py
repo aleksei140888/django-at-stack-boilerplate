@@ -14,7 +14,16 @@ import pytest
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 
-IGNORED_DIRS = {".git", ".venv", "node_modules", "staticfiles", "static", "var", "htmlcov"}
+IGNORED_DIRS = {
+    ".git",
+    ".venv",
+    ".pytest_cache",
+    "node_modules",
+    "staticfiles",
+    "static",
+    "var",
+    "htmlcov",
+}
 
 # [text](target) — skipping external links, anchors and mailto:
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")

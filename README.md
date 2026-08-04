@@ -1,397 +1,155 @@
 # django-at-stack
 
-> Django + Alpine.js + Tailwind CSS + DaisyUI — production-ready boilerplate for SSR web apps.
+> Django + Alpine.js + Tailwind CSS + DaisyUI — a boilerplate for server-rendered
+> web apps, set up so that a person or a coding agent can start building on
+> day one.
+
+```bash
+git clone https://github.com/aleksei140888/django-at-stack-boilerplate my-project
+cd my-project
+make demo-up          # a running site with demo data on :8000 — no Docker, no keys
+```
 
 ## Stack
 
 | Layer | Technology |
 |---|---|
-| Backend | Django 5.1 + Django REST Framework |
-| Frontend | Alpine.js 3.x |
-| Styling | Tailwind CSS 4.x + DaisyUI 4.x |
+| Backend | Django 6 + Django REST Framework |
+| Frontend | Alpine.js 3 |
+| Styling | Tailwind CSS 4 + DaisyUI 5 |
 | Build | Vite 6 |
-| Database | PostgreSQL 17 |
-| Cache / Queue | Redis 7 + Celery |
-| Infra | Docker + docker-compose |
-| Static files | WhiteNoise |
-| Auth | django-allauth + custom User model |
-| Package manager | uv |
+| Database | PostgreSQL 17 (SQLite for tests and the demo environment) |
+| Cache / queue | Redis + Celery |
+| Static files | WhiteNoise; media optionally on S3 |
+| Auth | Custom `User` model (email login) + django-allauth |
+| Packaging | uv (`pyproject.toml` + committed `uv.lock`) |
+| Infra | Docker + docker compose, GitHub Actions |
 
-## Why this stack?
+Exact versions live in `pyproject.toml` and `package.json`.
 
-- **Full SSR** — great for SEO out of the box, no hydration complexity
-- **No SPA overhead** — Django templates handle rendering, Alpine.js handles interactivity
-- **Alpine.js** — minimal JS footprint, reactive UI without a build step for logic
-- **Tailwind 4 purges unused CSS** — tiny bundle in production
-- **DaisyUI** — ready-made accessible components with built-in dark/light themes
+## Why this stack
 
-## Features
+- **Server-rendered.** Good SEO by default, no hydration, no API layer to keep in
+  sync with a client.
+- **Alpine.js for interactivity.** Small enough that a page's behaviour reads next
+  to its markup; no component framework to learn.
+- **Tailwind 4 + DaisyUI 5.** Accessible components with light and dark themes,
+  and a bundle that only contains classes actually used.
+- **uv.** Dependency resolution measured in milliseconds and a lockfile that is
+  actually committed.
 
-- [x] Django 5 + DRF configured with pagination, filtering, throttling
-- [x] Tailwind CSS 4 + DaisyUI via Vite
-- [x] Alpine.js integrated (theme manager, cookie consent, live search, modal, toast)
-- [x] Dark / light theme with **system preference auto-detection** + localStorage persistence
-- [x] Custom `User` model — email auth, roles, GDPR consent, avatar
-- [x] Full authentication — register, login, logout, password reset/change, profile, account deletion
-- [x] Base templates with layout, navbar, footer, breadcrumbs
-- [x] SEO-ready — sitemap.xml, robots.txt, Open Graph, Twitter Card, schema.org, canonical URLs
-- [x] Cookie consent banner + Privacy Policy, Terms of Use, Cookie Policy pages
-- [x] Contact form with email sending
-- [x] Docker + docker-compose (dev + prod configs)
-- [x] PostgreSQL + Redis + Celery
-- [x] Static files via WhiteNoise; media files via **AWS S3** (optional, auto-activated)
-- [x] Environment config via django-environ
-- [x] `/health/` page — live dashboard (Alpine.js, auto-refresh every 60 s)
-- [x] `/api/v1/health/` endpoint — database, Redis, Celery, storage; extensible registry
-- [x] Error pages — 404, 403, 500
-- [x] Security headers middleware
-- [x] Health check API endpoint
-- [x] Code quality — black, isort, flake8, pre-commit
-- [x] Tests — pytest with fixtures and smoke tests
-- [x] Makefile with all common dev commands
-- [x] **uv** — fast Python package manager, `pyproject.toml` + `uv.lock`
+## What is in the box
 
-## Quick start
+**Application**
+- Custom `User` model — email login, roles, GDPR consent, avatar
+- Full auth flow: register, log in, password reset and change, profile, account
+  deactivation
+- Content pages, contact form, error pages (403/404/500), cookie consent banner
+- SEO: sitemap.xml, robots.txt, canonical URLs, Open Graph, Twitter Card,
+  schema.org
 
-### Docker (recommended)
+**Operations**
+- `/api/v1/health/` with a pluggable check registry, and `/health/` as a live
+  dashboard
+- Request-id correlation across logs, response headers and Sentry
+- Structured JSON logging in production
+- `/metrics` for Prometheus, behind a token
+- Security headers and a CSP assembled from settings
+
+**Development**
+- Four settings layers: `dev`, `test`, `demo`, `prod`
+- A demo environment with seeded data in one command, no infrastructure
+- Tests in parallel (pytest-xdist), factories, query budgets, JS unit tests via
+  `node --test`
+- A browser smoke walk that fails on console errors and on horizontal overflow at
+  phone widths
+- CI: lint, missing-migration check, tests, frontend build, collectstatic, and an
+  end-to-end run of the seeder
+- Version consistency enforced across `pyproject.toml`, `package.json` and
+  `package-lock.json`
+
+**For coding agents**
+- `CLAUDE.md` / `AGENTS.md` — conventions and a routing table into `docs/`
+- `docs/agents.md` — project memory: decisions and edge cases that already cost
+  somebody time
+- Playbooks for the repetitive tasks (add an app, a seeder, a health check)
+- A `SessionStart` hook that installs dependencies and seeds a demo database, so
+  a cloud session starts with a runnable app
+
+## Getting started
+
+### Just look at it
 
 ```bash
-git clone https://github.com/aleksei140888/django-at-stack-boilerplate
-cd django-at-stack-boilerplate
-cp .env.example .env       # edit SECRET_KEY and any other values
-docker-compose up --build
+make demo-up
 ```
 
-Open http://localhost:8000
+SQLite, seeded data, built assets, server on http://localhost:8000. No `.env`, no
+Docker, no API keys. Log in as `user@demo.local` / `demo12345` (also
+`admin@demo.local` and `moderator@demo.local`).
 
-### Local development
+### Develop on it
 
-Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) and Node.js 22+.
+Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) and
+Node.js 22+.
 
 ```bash
-# Python deps (creates .venv automatically)
-make install-dev       # uv sync --extra dev + pre-commit install
-
-# Node deps
-make npm-install
-
-# Environment
-cp .env.example .env
-# edit .env — set DATABASE_URL, SECRET_KEY
-
-# Database
+make install-dev      # Python deps + pre-commit hooks
+make npm-install      # Node deps
+make env-copy         # .env from .env.example — set SECRET_KEY and DATABASE_URL
 make migrate
-make superuser
+make create-admin EMAIL=you@example.com PASSWORD=...
 
-# Start servers (two terminals)
-make npm-dev                       # Vite on :5173
-uv run python manage.py runserver  # Django on :8000
+# two terminals
+make npm-dev          # Vite on :5173
+uv run python manage.py runserver
 ```
 
-## Project structure
-
-```
-apps/
-├── accounts/      # Custom User model + full auth flow
-├── core/          # Sitemap, robots.txt, middleware, context processors, health API
-└── pages/         # Home, contact, privacy, terms, cookies
-config/
-├── settings/
-│   ├── base.py    # Shared settings
-│   ├── dev.py     # Development overrides
-│   └── prod.py    # Production (Sentry, security headers)
-├── urls.py
-└── celery.py
-templates/
-├── base.html                    # Root layout — dark/light theme, SEO head
-├── partials/
-│   ├── _meta_seo.html           # title, canonical, OG, Twitter Card
-│   ├── _schema_org.html         # JSON-LD structured data
-│   ├── _navbar.html
-│   ├── _footer.html
-│   ├── _messages.html           # Flash messages (Alpine auto-dismiss)
-│   └── _cookie_consent.html     # GDPR cookie banner
-├── accounts/                    # Login, register, profile, password reset templates
-├── pages/                       # Content page templates
-└── errors/                      # 404, 403, 500
-static/src/
-├── js/main.js     # Alpine.js components + apiFetch() CSRF helper
-└── css/main.css   # Tailwind CSS 4 + DaisyUI
-```
-
-## Makefile commands
+### With Docker
 
 ```bash
-make help           # list all commands
-
-# Docker
-make up             # start all services
-make down           # stop services
-make logs           # follow logs
-
-# Django
-make migrate        # run migrations
-make makemigrations # create new migrations
-make superuser      # create admin user
-make shell          # Django shell
-
-# Frontend
-make npm-dev        # Vite dev server
-make npm-build      # build for production
-
-# Code quality
-make format         # black + isort
-make lint           # flake8
-make check          # format + lint
-
-# Tests
-make test           # pytest
-make test-cov       # pytest with coverage report
-
-# Production
-make deploy         # npm build + collectstatic
+make env-copy
+make up               # Postgres, Redis, Django, Vite, Celery
 ```
 
-## Environment variables
+## Everyday commands
 
-Copy `.env.example` to `.env` and adjust:
+`make help` lists all of them.
 
-```env
-SECRET_KEY=your-secret-key
-DEBUG=True
-DATABASE_URL=postgres://postgres:postgres@db:5432/django_at_stack
-REDIS_URL=redis://redis:6379/0
-SITE_URL=http://localhost:8000
-SITE_NAME=My Site
-```
-
-See `.env.example` for the full list including email, S3, and Sentry settings.
-
-## Authentication
-
-The `accounts` app provides a complete auth flow out of the box:
-
-| URL | View |
+| Command | Does |
 |---|---|
-| `/accounts/register/` | Registration with GDPR consent |
-| `/accounts/login/` | Login with "remember me" |
-| `/accounts/logout/` | POST logout |
-| `/accounts/profile/` | Edit profile, avatar |
-| `/accounts/password/change/` | Change password |
-| `/accounts/password/reset/` | Request reset email |
-| `/accounts/password/reset/confirm/<uid>/<token>/` | Set new password |
-| `/accounts/profile/delete/` | Deactivate account |
+| `make demo-up` | demo environment: assets, migrations, seed data, server |
+| `make test` | Python tests in parallel + JS unit tests |
+| `make ci` | format + lint + version check + tests |
+| `make demo-smoke` | walk the demo site in Chromium, screenshots in `var/` |
+| `make lock-upgrade` | upgrade every Python package |
+| `make build-prod` | build the production image |
 
-### User model
+## Making it your own
 
-```python
-class User(AbstractBaseUser, PermissionsMixin):
-    email           # unique, used as USERNAME_FIELD
-    first_name
-    last_name
-    role            # guest / user / moderator / admin
-    avatar
-    bio
-    gdpr_consent    # required at registration
-    email_notifications
-```
+1. Rename the project: `name` in `pyproject.toml` and `package.json`, the app
+   name in `config/celery.py`, `SITE_NAME` in `.env`.
+2. Reset the version to something like `2026.1.0` in all three files
+   (`make version-check` verifies them).
+3. Replace the placeholder artwork in `static/img/`.
+4. Rewrite the content pages in `templates/pages/` — privacy, terms, cookies are
+   scaffolding, not legal advice.
+5. Rewrite `CLAUDE.md`'s first paragraph for your product, and empty
+   `docs/agents.md` down to its index.
+6. Add your first app: [`docs/playbooks/add-app.md`](docs/playbooks/add-app.md).
 
-## SEO
+## Documentation
 
-Every page supports:
-
-```python
-# In any view:
-return render(request, "template.html", {
-    "page_title": "My Page",
-    "meta_description": "Description for search engines.",
-    "schema_type": "Article",   # schema.org type
-    "noindex": False,           # set True to exclude from indexing
-})
-```
-
-This automatically populates:
-- `<title>`, `<meta name="description">`, `<link rel="canonical">`
-- Open Graph (`og:title`, `og:description`, `og:image`, `og:url`)
-- Twitter Card
-- schema.org JSON-LD block
-
-Add new public pages to `apps/core/sitemaps.py` to include them in `sitemap.xml`.
-
-## Alpine.js components
-
-Registered globally in `static/src/js/main.js`:
-
-```html
-<!-- Dark/light theme -->
-<html x-data="themeManager()" x-init="initTheme()" :data-theme="theme">
-
-<!-- Toggle button -->
-<button @click="toggleTheme()">...</button>
-
-<!-- Cookie consent -->
-<div x-data="cookieConsent()" x-show="!accepted">...</div>
-
-<!-- Live search -->
-<div x-data="searchDemo()">
-  <input x-model="query">
-  <template x-for="item in filtered">...</template>
-</div>
-
-<!-- Modal -->
-<div x-data="modal()">
-  <button @click="show()">Open</button>
-  <div x-show="open" @click.outside="hide()">...</div>
-</div>
-```
-
-### API fetch helper
-
-```js
-import { apiFetch } from "/static/src/js/main.js";
-
-// Automatically includes CSRF token
-const data = await apiFetch("/api/v1/endpoint/", {
-  method: "POST",
-  body: JSON.stringify({ key: "value" }),
-});
-```
-
-## Health check
-
-### Dashboard page
-
-Open **`/health/`** in a browser — shows live status of every registered component with auto-refresh every 60 seconds.
-
-### API endpoint
-
-```
-GET /api/v1/health/
-```
-
-```json
-{
-  "status": "ok",
-  "timestamp": "2024-01-01T12:00:00+00:00",
-  "checks": {
-    "database": { "status": "ok", "latency_ms": 3.1, "vendor": "postgresql" },
-    "redis":    { "status": "ok", "latency_ms": 0.8 },
-    "storage":  { "status": "ok", "backend": "s3", "bucket": "my-bucket" },
-    "celery":   { "status": "degraded", "detail": "no active workers" }
-  }
-}
-```
-
-HTTP 200 for `ok` / `degraded`, HTTP 503 for `error`.
-
-### Adding a custom check
-
-Register from anywhere in the codebase:
-
-```python
-from apps.core.health import HealthCheck
-
-@HealthCheck.register("stripe")
-def check_stripe():
-    import stripe
-    stripe.Balance.retrieve()          # raises on error
-    return {"status": "ok"}
-
-@HealthCheck.register("my_api")
-def check_my_api():
-    import requests
-    r = requests.get("https://api.example.com/ping", timeout=2)
-    r.raise_for_status()
-    return {"status": "ok", "response_ms": r.elapsed.total_seconds() * 1000}
-```
-
-## AWS S3 (media storage)
-
-Set the following env vars to switch media uploads from local disk to S3.
-Static files always use WhiteNoise regardless.
-
-```env
-AWS_STORAGE_BUCKET_NAME=my-bucket
-AWS_ACCESS_KEY_ID=...
-AWS_SECRET_ACCESS_KEY=...
-AWS_S3_REGION_NAME=eu-central-1
-# optional — CloudFront or custom domain:
-AWS_S3_CUSTOM_DOMAIN=cdn.example.com
-```
-
-When `AWS_STORAGE_BUCKET_NAME` is set, `MEDIA_URL` is automatically pointed at the bucket (or custom domain), and the storage health check verifies S3 connectivity on every `/api/v1/health/` call.
-
-## Production deployment
-
-```bash
-# Build frontend assets
-make npm-build
-
-# Start production stack
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-Production stack includes:
-- Gunicorn (4 workers) as WSGI server
-- Nginx for SSL termination and static file serving
-- PostgreSQL + Redis
-- Celery worker
-
-Set these additional env vars for production:
-
-```env
-DEBUG=False
-SECURE_SSL_REDIRECT=True
-SESSION_COOKIE_SECURE=True
-CSRF_COOKIE_SECURE=True
-SENTRY_DSN=https://...
-```
-
-## Dependency management (uv)
-
-All Python dependencies are declared in `pyproject.toml`. The lockfile `uv.lock` is committed to the repo.
-
-```bash
-# Install
-make install-dev        # base + dev extras
-make install            # base + prod extras (Sentry)
-
-# Add / remove packages
-uv add requests                      # add production dep
-uv add --optional dev pytest-xdist   # add dev dep
-uv remove requests                   # remove dep
-
-# Update
-make lock               # regenerate uv.lock (keeps versions)
-make lock-upgrade       # upgrade all packages to latest
-```
-
-Avoid editing `uv.lock` manually. Commit both `pyproject.toml` and `uv.lock` together.
-
-## Code quality
-
-```bash
-make format    # auto-format with black + isort
-make lint      # flake8
-make check     # both
-```
-
-Pre-commit hooks (installed via `make install-dev`):
-- `black` — code formatting (line length 100)
-- `isort` — import sorting
-- `flake8` + `flake8-django` + `flake8-bugbear`
-- Standard hooks: trailing whitespace, end-of-file, merge conflicts
-
-## Running tests
-
-```bash
-make test                          # all tests
-make test-cov                      # with HTML coverage report
-pytest apps/accounts/tests.py      # single module
-pytest -k "login"                  # by name
-```
-
-Tests use SQLite in memory — no Docker required for running the test suite.
+| Document | Covers |
+|---|---|
+| [`CLAUDE.md`](CLAUDE.md) | Conventions and routing — the working manual |
+| [`docs/architecture.md`](docs/architecture.md) | Where code belongs and how apps stay decoupled |
+| [`docs/conventions.md`](docs/conventions.md) | Style, commits, versioning, gates |
+| [`docs/testing.md`](docs/testing.md) | Test mechanics and the parallel-run rules |
+| [`docs/test-environment.md`](docs/test-environment.md) | The demo environment and the smoke walk |
+| [`docs/observability.md`](docs/observability.md) | Logs, health, metrics, incident steps |
+| [`docs/deployment.md`](docs/deployment.md) | Images, static files, environment, checklists |
+| [`docs/README.md`](docs/README.md) | Full catalogue |
 
 ## License
 

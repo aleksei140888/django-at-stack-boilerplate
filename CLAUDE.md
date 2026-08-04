@@ -1,204 +1,122 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working in this repository.
+Guidance for coding agents working in this repository. Humans: `README.md` is the
+front door, this file is the working manual.
 
-## Project overview
+**Django AT Stack** — a boilerplate for server-rendered web apps: Django + DRF on
+the back, Alpine.js + Tailwind + DaisyUI on the front, Vite for the build. The
+exact stack is in `pyproject.toml` and `package.json`; nothing here restates
+version numbers, because a restated version number goes stale.
 
-Django AT Stack — production-ready boilerplate for SSR web apps.
+## Before you start a task
 
-**Stack:** Django 5.1 + DRF · Alpine.js 3 · Tailwind CSS 4 · DaisyUI 4 · Vite 6 · PostgreSQL 17 · Redis · Celery · Docker
+1. Skim the index at the top of [`docs/agents.md`](docs/agents.md) — the project's
+   memory of decisions and edge cases. Open **only** the sections the index points
+   at; do not read it end to end.
+2. Use the routing table below to find the one document that covers your task. If
+   nothing matches, the full catalogue is in [`docs/README.md`](docs/README.md).
 
-## Development setup
-
-```bash
-cp .env.example .env          # edit DATABASE_URL, SECRET_KEY
-make install-dev               # uv sync --extra dev + pre-commit install
-make npm-install               # Node deps
-make migrate                   # run migrations
-make superuser                 # create admin user
-make npm-dev                   # start Vite (port 5173)
-uv run python manage.py runserver  # start Django (port 8000)
-```
-
-Or with Docker:
-
-```bash
-docker-compose up --build
-```
-
-## Package management — uv
-
-Dependencies live in `pyproject.toml`. The lockfile `uv.lock` is committed.
-
-| Command | Description |
+| What you are deciding | What to read |
 |---|---|
-| `uv sync --extra dev` | Install all deps including dev extras |
-| `uv sync --extra prod` | Install base + Sentry (production) |
-| `uv lock` | Regenerate `uv.lock` after editing `pyproject.toml` |
-| `uv lock --upgrade` | Upgrade all packages |
-| `uv add <pkg>` | Add a new dependency |
-| `uv add --optional dev <pkg>` | Add a dev dependency |
-| `uv run <cmd>` | Run a command inside the managed venv |
+| Where a piece of code belongs, how apps talk to each other | [`architecture.md`](docs/architecture.md) |
+| Naming, commits, versioning, style, opt-in gates | [`conventions.md`](docs/conventions.md) |
+| Writing tests — factories, parallel runs, budgets | [`testing.md`](docs/testing.md) |
+| Getting a running site with data to click through | [`test-environment.md`](docs/test-environment.md) |
+| Logs, metrics, health checks, an incident in production | [`observability.md`](docs/observability.md) |
+| Shipping it — Docker, static files, environment variables | [`deployment.md`](docs/deployment.md) |
+| Adding a new app | [`playbooks/add-app.md`](docs/playbooks/add-app.md) |
+| Adding demo data for a domain | [`playbooks/add-seeder.md`](docs/playbooks/add-seeder.md) |
+| Adding a health check for a dependency | [`playbooks/add-health-check.md`](docs/playbooks/add-health-check.md) |
 
-**Do not** create or edit `requirements/*.txt` — the project uses `pyproject.toml` exclusively.
+## Conventions
 
-## Common commands
+**Python.** Apps live under `apps/`. Secrets come from `env("VAR")` and every
+variable is listed in `.env.example`. Line length 100, black + isort + flake8.
 
-| Command | Description |
-|---|---|
-| `make up` | Start Docker services |
-| `make migrate` | Run migrations |
-| `make makemigrations` | Create new migrations |
-| `make test` | Run pytest |
-| `make format` | black + isort |
-| `make lint` | flake8 |
-| `make check` | format + lint |
-| `make npm-dev` | Vite dev server |
-| `make npm-build` | Build frontend for prod |
-| `make shell` | Django shell |
-| `make lock` | Regenerate uv.lock |
-| `make lock-upgrade` | Upgrade all packages |
+**Layers.** `selectors.py` holds every SELECT (filters, search, read aggregation);
+`services.py` holds everything that writes (create/update/delete plus side
+effects such as sending mail). Views call those — they do not build querysets
+inline. The payoff arrives the third time a filter is needed.
 
-## Project structure
+**Settings.** Four layers, none of them imported directly: `dev`, `test`, `demo`,
+`prod` (see the module docstring in `config/settings/base.py`). `test` and `demo`
+provide their own `SECRET_KEY`, so a fresh clone runs `make test` and
+`make demo-up` with no `.env` at all.
 
-```
-apps/
-  accounts/   — custom User model, full auth (register/login/password reset/profile)
-  core/       — sitemap, robots.txt, security middleware, context processors, API health
-  pages/      — home, contact, privacy, terms, cookies
-config/
-  settings/
-    base.py   — shared settings
-    dev.py    — development overrides
-    prod.py   — production overrides (Sentry, security headers)
-  urls.py
-  celery.py
-templates/
-  base.html              — root layout with dark/light theme
-  core/
-    health.html          — system health dashboard (Alpine.js, auto-refresh 60 s)
-  partials/
-    _meta_seo.html       — SEO meta tags, OG, Twitter Card, canonical
-    _schema_org.html     — schema.org JSON-LD
-    _navbar.html
-    _footer.html
-    _messages.html       — flash messages (Alpine auto-dismiss)
-    _cookie_consent.html — GDPR cookie banner
-  accounts/              — all auth templates
-  pages/                 — content page templates
-  errors/                — 404, 403, 500
-  email/                 — transactional email templates
-static/src/
-  js/main.js   — Alpine.js components (themeManager, cookieConsent, searchDemo,
-                 modal, toast, healthDashboard)
-  css/main.css — Tailwind CSS 4 + DaisyUI
-pyproject.toml — all Python dependencies + tool configs (black, isort, pytest)
-uv.lock        — committed lockfile
-```
-
-## Key conventions
-
-### Python
-
-- Line length: **100** (black + flake8)
-- Imports sorted with **isort** (profile=black)
-- All new apps go under `apps/`
-- Settings split into `base` / `dev` / `prod` — never hardcode secrets
-- Use `env("VAR")` from `django-environ` for all env variables
-
-### Django
-
-- Custom user model: `apps.accounts.User` (email as USERNAME_FIELD, no username)
-- Always use `get_user_model()` when referencing the User model
+**Django.**
+- Custom user `apps.accounts.User`, email as `USERNAME_FIELD`
 - URL namespaces: `accounts:`, `pages:`, `api:`
-- Views pass `page_title` and `meta_description` to context for SEO
-- All forms include `{% csrf_token %}` — never skip it
+- Views put `page_title` and `meta_description` in the context
+- One `<h1>` per page; add public pages to `apps/core/sitemaps.py`
 
-### Templates
+**Templates.**
+- `{% trans %}` for every user-facing string
+- **`{# … #}` is single-line only.** A multi-line one leaks its own text into the
+  page and can swallow the tag that follows it. Use `{% comment %}` blocks.
+- **Do not override `{% block canonical %}` with a full `<link>` tag** —
+  `canonical_url` comes from a context processor and is already inside `href=""`.
+  Django passes an overridden block through `{% include %}` as a string.
+- Anything visible by default behind an `x-show` needs `x-cloak`, or it flashes
+  before Alpine initialises.
 
-- Extend `base.html` for all pages
-- Set `{% block title %}`, `{% block meta_description %}`, `{% block canonical %}` per page
-- Use `{% trans %}` / `{% blocktrans %}` for all user-facing strings
-- One `<h1>` per page — required for SEO
-- Breadcrumb nav on inner pages (DaisyUI `breadcrumbs`)
+**Mobile-first is the default for all frontend work,** admin screens included.
+Base classes target a narrow screen; `sm:`/`lg:` *add* width rather than rescue
+it. Typical markers of desktop-first markup: a row of controls with no
+`flex-wrap`, fixed widths without an `sm:` prefix, `grid-flow-col` for a list that
+has to wrap. Check before committing anything visible: at 360 and 390px,
+`document.documentElement.scrollWidth == clientWidth`. `make demo-smoke` asserts
+exactly that on every page it walks.
 
-### Frontend (Alpine.js)
+**Frontend.** Alpine components are registered in `main.js` before
+`Alpine.start()`; requests go through `apiFetch(url, options)`, which attaches the
+CSRF token; the theme lives in `data-theme` on `<html>`. Tailwind finds class
+names through the `@source` lines in `main.css` — a new template directory outside
+`templates/` and `apps/` needs a line there, or its classes are silently dropped
+from the bundle.
 
-- Register all Alpine components in `static/src/js/main.js` before `Alpine.start()`
-- Use `apiFetch(url, options)` from `main.js` for API calls — it handles CSRF automatically
-- Theme is controlled via `data-theme` on `<html>` — do not override inline
-- Form inputs automatically get DaisyUI styles via base CSS layer rules
+**Version.** `YYYY.M.PATCH`, identical in `pyproject.toml`, `package.json` and
+`package-lock.json`. The same commit that changes code bumps it, otherwise
+`auto-tag.yml` creates no tag. `make version-check` (also a pre-commit hook)
+catches the drift.
 
-### Health checks
+## Architecture in one paragraph
 
-- Add new checks in any app with `@HealthCheck.register("name")` from `apps.core.health`
-- Check functions return `{"status": "ok"|"degraded"|"error", ...extra_fields}`
-- Raising any exception automatically marks the check as `"error"`
+Apps depend on each other only through contracts — base classes, registries,
+signals — never by importing another app's internals. Wiring happens by
+autodiscovery on module name (`seeding.py`), extension by decorator
+(`@register_seeder`, `@HealthCheck.register`). Adding an app requires no change
+in `apps/core`. Details and the reasoning: [`docs/architecture.md`](docs/architecture.md).
 
-### SEO checklist for new pages
+## Commands
 
-- [ ] Set `page_title` and `meta_description` in view context
-- [ ] One `<h1>` in the template
-- [ ] Pass `schema_type` if relevant (e.g., `"Article"`, `"Product"`)
-- [ ] Add URL to `StaticViewSitemap.items()` in `apps/core/sitemaps.py`
-- [ ] Set `noindex=True` in context for pages that should not be indexed
+`make help` lists everything. The ones that matter day to day:
 
-## Running tests
+| Command | What it does |
+|---|---|
+| `make demo-up` | SQLite + demo data + server, no Docker, no API keys |
+| `make test` | Python tests in parallel + JS unit tests |
+| `make ci` | format + lint + version check + tests |
+| `make demo-smoke` | walks the demo site in Chromium, screenshots in `var/` |
 
-```bash
-make test          # all tests
-make test-cov      # with coverage report (htmlcov/)
-uv run pytest apps/accounts/tests.py  # single file
-uv run pytest -k "login"              # by name pattern
-```
+## Working rhythm
 
-Tests use SQLite in memory by default (no Docker needed). Fixtures are in `conftest.py`.
+**TDD is required** for business logic, services, models, API and views. Tests are
+**not** required for text and template typos, config and constants without logic,
+documentation, or cosmetic CSS/JS. Mechanics: [`docs/testing.md`](docs/testing.md).
 
-## Adding a new app
+**After every change:** `make ci`, or step by step with `make beautify` /
+`make lint` / `make version-check` / `make test`. Use `# noqa` only with a reason
+worth reading.
 
-```bash
-uv run python manage.py startapp myapp apps/myapp
-```
+**Update documentation in the same commit:** architecture or domain model →
+the matching file in `docs/`; project structure, stack or setup → `README.md`;
+conventions → this file. Decisions and edge cases → the
+[`memory`](.claude/skills/memory/SKILL.md) skill (`docs/agents.md`).
 
-Then:
-1. Add `"apps.myapp"` to `LOCAL_APPS` in `config/settings/base.py`
-2. Create `apps/myapp/urls.py` with `app_name`
-3. Include in `config/urls.py`
-4. Add to `apps/core/sitemaps.py` if it has public pages
+**Noticed something outside the scope of your task** — undocumented behaviour in a
+dependency, technical debt, a strange shape in real data — write one line into
+`docs/agents.md` → "Incidental observations" straight away, without waiting for a
+better moment.
 
-## Adding a Python dependency
-
-```bash
-uv add <package>                    # production dep
-uv add --optional dev <package>     # dev-only dep
-uv add --optional prod <package>    # production extras (e.g. sentry)
-# uv.lock is updated automatically — commit both files
-```
-
-## Environment variables
-
-All variables are documented in `.env.example`. Required for local dev:
-
-```
-SECRET_KEY=...
-DATABASE_URL=postgres://...
-DJANGO_SETTINGS_MODULE=config.settings.dev
-```
-
-For production additionally set:
-```
-SENTRY_DSN=...
-REDIS_URL=...
-AWS_STORAGE_BUCKET_NAME=...  (optional, enables S3 for media)
-```
-
-## Deployment
-
-```bash
-make deploy          # npm build + collectstatic
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-Production uses Gunicorn (4 workers) behind Nginx with SSL termination.
-Static files served by WhiteNoise (Django) and Nginx directly.
-uv manages the production venv inside the Docker image via `uv sync --frozen --extra prod`.
+Commits: `<type>(<scope>): <short description>`, body after a blank line when it
+earns its place. Explain *why*, not *what* — the diff already says what.
