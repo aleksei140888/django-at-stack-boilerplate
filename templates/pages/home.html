@@ -1,9 +1,8 @@
 {% extends "base.html" %}
-{% load i18n %}
-{% load static %}
+{% load i18n static %}
 
-{% block title %}{{ SITE_NAME }} — {% trans "Production-ready Django boilerplate" %}{% endblock %}
-{% block meta_description %}{% trans "Django + Alpine.js + Tailwind CSS + DaisyUI. Production-ready SSR boilerplate with authentication, SEO, and Docker." %}{% endblock %}
+{% block title %}{{ SITE_NAME }} — {% trans "Django boilerplate for server-rendered apps" %}{% endblock %}
+{% block meta_description %}{% trans "Django, Alpine.js, Tailwind and DaisyUI wired together: email auth, health checks, a seeded demo environment and CI that already runs." %}{% endblock %}
 
 {% block og_type %}website{% endblock %}
 
@@ -13,140 +12,281 @@
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "{{ SITE_NAME }}",
-  "url": "{{ SITE_URL }}",
-  "description": "{% trans 'Django + Alpine.js + Tailwind CSS + DaisyUI — production-ready boilerplate.' %}",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "{{ SITE_URL }}/search/?q={search_term_string}",
-    "query-input": "required name=search_term_string"
-  }
+  "url": "{{ canonical_url }}",
+  "description": "{% trans 'Django + Alpine.js + Tailwind CSS + DaisyUI boilerplate for server-rendered web apps.' %}"
 }
 </script>
 {% endblock %}
 
 {% block content %}
 
-{# Hero #}
-<section class="hero min-h-[60vh] bg-gradient-to-br from-primary/10 to-secondary/10">
-  <div class="hero-content text-center">
-    <div class="max-w-2xl">
-      <h1 class="text-5xl font-bold mb-6">
-        Django <span class="text-primary">AT</span> Stack
-      </h1>
-      <p class="text-xl text-base-content/70 mb-8">
-        {% trans "Django + Alpine.js + Tailwind CSS + DaisyUI — production-ready boilerplate for SSR web apps." %}
+{% comment %}
+Hero: asymmetric composition per DESIGN.md — 7/5 split on desktop, stacked on
+mobile. The decorative column is inline SVG, so there is no external image to
+break and no request to wait for.
+{% endcomment %}
+<section class="relative overflow-hidden border-b border-primary/10">
+  <div class="tribal-grid pointer-events-none absolute inset-0 opacity-60" aria-hidden="true"></div>
+
+  <div class="relative mx-auto grid w-full max-w-[1280px] items-center gap-12 px-6 py-20 lg:grid-cols-12 lg:py-28">
+    <div class="animate-enter lg:col-span-7">
+      <p class="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 font-mono text-xs tracking-widest text-primary uppercase">
+        <span class="pulse-ring inline-block h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true"></span>
+        {% trans "Django" %} {{ APP_VERSION }}
       </p>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+
+      <h1 class="text-[clamp(2.5rem,5vw,4rem)] leading-[1.05]">
+        <span class="block">Django</span>
+        <span class="text-tribal-gradient block">AT Stack</span>
+      </h1>
+
+      <p class="prose-tribal mt-6 text-lg">
+        {% blocktrans trimmed %}
+          Server-rendered Django with Alpine.js on top. Email authentication,
+          health checks, structured logs and a demo environment with data —
+          already wired, already tested.
+        {% endblocktrans %}
+      </p>
+
+      <div class="mt-10 flex flex-col gap-3 sm:flex-row">
         {% if not user.is_authenticated %}
-          <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg">
-            {% trans "Get started" %}
+          <a href="{% url 'accounts:register' %}"
+             class="btn-tribal w-full sm:w-auto">
+            {% trans "Create an account" %}
           </a>
-          <a href="{% url 'accounts:login' %}" class="btn btn-outline btn-lg">
+          <a href="{% url 'accounts:login' %}"
+             class="btn-tribal-ghost w-full sm:w-auto">
             {% trans "Log in" %}
           </a>
         {% else %}
-          <a href="{% url 'accounts:profile' %}" class="btn btn-primary btn-lg">
+          <a href="{% url 'accounts:profile' %}"
+             class="btn-tribal w-full sm:w-auto">
             {% trans "My profile" %}
+          </a>
+          <a href="{% url 'health' %}"
+             class="btn-tribal-ghost w-full sm:w-auto">
+            {% trans "System health" %}
           </a>
         {% endif %}
       </div>
+
+      <dl class="mt-12 grid grid-cols-2 gap-6 border-t border-primary/15 pt-8 sm:grid-cols-4">
+        <div>
+          <dt class="font-mono text-xs tracking-wider text-base-content/50 uppercase">{% trans "Tests" %}</dt>
+          <dd class="mt-1 text-2xl font-bold text-primary">175</dd>
+        </div>
+        <div>
+          <dt class="font-mono text-xs tracking-wider text-base-content/50 uppercase">{% trans "Setup" %}</dt>
+          <dd class="mt-1 text-2xl font-bold text-secondary">1 cmd</dd>
+        </div>
+        <div>
+          <dt class="font-mono text-xs tracking-wider text-base-content/50 uppercase">{% trans "Runtime deps" %}</dt>
+          <dd class="mt-1 text-2xl font-bold text-accent">16</dd>
+        </div>
+        <div>
+          <dt class="font-mono text-xs tracking-wider text-base-content/50 uppercase">{% trans "Client JS" %}</dt>
+          <dd class="mt-1 text-2xl font-bold text-warning">17 kB</dd>
+        </div>
+      </dl>
+    </div>
+
+    {# Decorative mask: concentric geometry, organic curve, neon trail. #}
+    <div class="animate-enter hidden lg:col-span-5 lg:block" aria-hidden="true">
+      <svg viewBox="0 0 400 400" class="tribal-mask glow-accent w-full rounded-lg" role="presentation">
+        <defs>
+          <linearGradient id="trail" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="var(--color-primary)"/>
+            <stop offset="50%" stop-color="var(--color-tribal-magenta)"/>
+            <stop offset="100%" stop-color="var(--color-accent)"/>
+          </linearGradient>
+          <radialGradient id="core">
+            <stop offset="0%" stop-color="var(--color-primary)" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="var(--color-primary)" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+
+        <rect width="400" height="400" fill="var(--color-base-200)" rx="8"/>
+        <circle cx="200" cy="200" r="150" fill="url(#core)" opacity="0.35"/>
+
+        {# Concentric rings — the "symmetry that feels biological" #}
+        <circle cx="200" cy="200" r="150" fill="none" stroke="url(#trail)" stroke-width="1.5" opacity="0.7"/>
+        <circle cx="200" cy="200" r="112" fill="none" stroke="var(--color-primary)" stroke-width="1" opacity="0.45"/>
+        <circle cx="200" cy="200" r="74" fill="none" stroke="var(--color-tribal-magenta)" stroke-width="1" opacity="0.5"/>
+
+        {# Radial spokes #}
+        <g stroke="var(--color-primary)" stroke-width="1" opacity="0.3">
+          <path d="M200 20V380M20 200h360"/>
+          <path d="M74 74 326 326M326 74 74 326"/>
+        </g>
+
+        {# Organic curve cutting the grid #}
+        <path d="M60 250c50-120 230-120 280 0" fill="none" stroke="url(#trail)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M60 150c50 120 230 120 280 0" fill="none" stroke="var(--color-secondary)" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+
+        {# Mask-like chevrons #}
+        <g fill="none" stroke="var(--color-primary)" stroke-width="2.5" stroke-linecap="round">
+          <path d="M150 165 200 200 250 165"/>
+          <path d="M150 235 200 200 250 235"/>
+        </g>
+        <circle cx="200" cy="200" r="10" fill="var(--color-primary)"/>
+      </svg>
     </div>
   </div>
 </section>
 
-{# Features #}
-<section class="py-20 px-4">
-  <div class="container mx-auto max-w-5xl">
-    <h2 class="text-3xl font-bold text-center mb-12">{% trans "What's included" %}</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+{% comment %}
+Feature grid: asymmetric on purpose — a wide lead card, then varied spans.
+DESIGN.md forbids three equal columns.
+{% endcomment %}
+<section class="mx-auto w-full max-w-[1280px] px-6 py-[clamp(4rem,8vw,8rem)]">
+  <div class="max-w-2xl">
+    <h2 class="text-2xl">{% trans "What is already wired" %}</h2>
+    <p class="prose-tribal mt-3">
+      {% trans "Not a list of libraries — a working application with the parts that usually take a week to assemble." %}
+    </p>
+  </div>
 
-      {% with features=features_list %}
-      <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
-        <div class="card-body">
-          <h3 class="card-title text-lg">
-            <span class="text-primary text-2xl" aria-hidden="true">🐍</span>
-            Django 5 + DRF
-          </h3>
-          <p class="text-base-content/70 text-sm">{% trans "Full-featured Django backend with REST Framework for APIs." %}</p>
-        </div>
-      </div>
+  <div class="enter-cascade mt-12 grid gap-4 md:grid-cols-6">
 
-      <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
-        <div class="card-body">
-          <h3 class="card-title text-lg">
-            <span class="text-primary text-2xl" aria-hidden="true">🎨</span>
-            Tailwind 4 + DaisyUI
-          </h3>
-          <p class="text-base-content/70 text-sm">{% trans "Utility-first CSS with ready-made components and dark/light themes." %}</p>
-        </div>
-      </div>
+    <article class="card-tribal hover-lift p-6 md:col-span-4">
+      <span class="mb-4 grid h-10 w-10 place-items-center rounded-lg border border-primary/30 bg-primary/10 text-primary" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </span>
+      <h3 class="text-lg">{% trans "Authentication, end to end" %}</h3>
+      <p class="prose-tribal mt-2 text-sm">
+        {% trans "Email as the login, custom user model, registration with consent, password reset, profile editing and account deactivation. Writes go through a service layer, so the same flow works from a management command." %}
+      </p>
+    </article>
 
-      <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
-        <div class="card-body">
-          <h3 class="card-title text-lg">
-            <span class="text-primary text-2xl" aria-hidden="true">⚡</span>
-            Alpine.js
-          </h3>
-          <p class="text-base-content/70 text-sm">{% trans "Lightweight JS for interactivity. No SPA complexity needed." %}</p>
-        </div>
-      </div>
+    <article class="card-tribal hover-lift border-accent/25 p-6 md:col-span-2">
+      <span class="mb-4 grid h-10 w-10 place-items-center rounded-lg border border-accent/30 bg-accent/10 text-accent" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+      </span>
+      <h3 class="text-lg">{% trans "Health and metrics" %}</h3>
+      <p class="prose-tribal mt-2 text-sm">
+        {% trans "A pluggable check registry behind /api/v1/health/, a live dashboard, and Prometheus metrics behind a token." %}
+      </p>
+    </article>
 
-      <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
-        <div class="card-body">
-          <h3 class="card-title text-lg">
-            <span class="text-primary text-2xl" aria-hidden="true">🔐</span>
-            {% trans "Full auth" %}
-          </h3>
-          <p class="text-base-content/70 text-sm">{% trans "Registration, login, password reset, profile management, GDPR consent." %}</p>
-        </div>
-      </div>
+    <article class="card-tribal hover-lift border-secondary/25 p-6 md:col-span-2">
+      <span class="mb-4 grid h-10 w-10 place-items-center rounded-lg border border-secondary/30 bg-secondary/10 text-secondary" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>
+        </svg>
+      </span>
+      <h3 class="text-lg">{% trans "Demo data in one command" %}</h3>
+      <p class="prose-tribal mt-2 text-sm">
+        {% trans "make demo-up gives a running site with seeded content — no Docker, no Redis, no API keys." %}
+      </p>
+    </article>
 
-      <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
-        <div class="card-body">
-          <h3 class="card-title text-lg">
-            <span class="text-primary text-2xl" aria-hidden="true">🔍</span>
-            SEO-ready
-          </h3>
-          <p class="text-base-content/70 text-sm">{% trans "Sitemap, robots.txt, Open Graph, schema.org, canonical URLs." %}</p>
-        </div>
-      </div>
+    <article class="card-tribal hover-lift border-warning/25 p-6 md:col-span-4">
+      <span class="mb-4 grid h-10 w-10 place-items-center rounded-lg border border-warning/30 bg-warning/10 text-warning" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m9 11 3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>
+        </svg>
+      </span>
+      <h3 class="text-lg">{% trans "Tests that run in parallel, and CI that means it" %}</h3>
+      <p class="prose-tribal mt-2 text-sm">
+        {% trans "175 Python tests under pytest-xdist plus JS unit tests. CI lints, checks for missing migrations, builds the frontend, collects static files and exercises the seeder end to end." %}
+      </p>
+    </article>
 
-      <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
-        <div class="card-body">
-          <h3 class="card-title text-lg">
-            <span class="text-primary text-2xl" aria-hidden="true">🐳</span>
-            Docker-ready
-          </h3>
-          <p class="text-base-content/70 text-sm">{% trans "Docker + docker-compose for dev and production with PostgreSQL." %}</p>
-        </div>
-      </div>
-      {% endwith %}
-    </div>
+    <article class="card-tribal hover-lift p-6 md:col-span-3">
+      <span class="mb-4 grid h-10 w-10 place-items-center rounded-lg border border-primary/30 bg-primary/10 text-primary" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>
+        </svg>
+      </span>
+      <h3 class="text-lg">{% trans "Findable by search engines" %}</h3>
+      <p class="prose-tribal mt-2 text-sm">
+        {% trans "Sitemap, robots.txt, canonical URLs, Open Graph and schema.org — with tests asserting every listed URL still resolves." %}
+      </p>
+    </article>
+
+    <article class="card-tribal hover-lift border-accent/25 p-6 md:col-span-3">
+      <span class="mb-4 grid h-10 w-10 place-items-center rounded-lg border border-accent/30 bg-accent/10 text-accent" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/>
+        </svg>
+      </span>
+      <h3 class="text-lg">{% trans "Written for agents too" %}</h3>
+      <p class="prose-tribal mt-2 text-sm">
+        {% trans "Conventions in CLAUDE.md, playbooks for the repetitive work, and a memory file holding the traps that already cost somebody an afternoon." %}
+      </p>
+    </article>
+
   </div>
 </section>
 
-{# Alpine.js demo — interactive search #}
-<section class="py-16 px-4 bg-base-200">
-  <div class="container mx-auto max-w-2xl text-center">
-    <h2 class="text-2xl font-bold mb-4">{% trans "Alpine.js example: live search" %}</h2>
-    <p class="text-base-content/60 mb-8 text-sm">{% trans "Type to filter items below — no page reload." %}</p>
+{# Alpine demo — client-side filtering with no page reload #}
+<section class="border-y border-primary/10 bg-base-200/40">
+  <div class="mx-auto grid w-full max-w-[1280px] gap-10 px-6 py-[clamp(4rem,8vw,8rem)] lg:grid-cols-12">
+    <div class="lg:col-span-5">
+      <h2 class="text-2xl">{% trans "Alpine.js, in place" %}</h2>
+      <p class="prose-tribal mt-3">
+        {% trans "Interactivity lives next to the markup it drives. No build step for the logic, no client-side router, no state library." %}
+      </p>
+      <p class="mt-4 font-mono text-xs text-base-content/50">static/src/js/main.js</p>
+    </div>
 
-    <div x-data="searchDemo()">
-      <input
-        type="search"
-        x-model="query"
-        placeholder="{% trans 'Search features...' %}"
-        class="input input-bordered w-full mb-4"
-        aria-label="{% trans 'Search features' %}"
-      >
-      <ul class="space-y-2 text-left">
+    <div class="lg:col-span-7" x-data="searchDemo([
+      'Django 6 + DRF',
+      'Alpine.js 3',
+      'Tailwind CSS 4 + DaisyUI 5',
+      'Vite build',
+      'PostgreSQL + Redis + Celery',
+      'Docker &amp; docker compose',
+      'Email authentication',
+      'SEO: sitemap, Open Graph, schema.org',
+      'Health checks and metrics',
+      'Demo environment with seed data',
+      'CI: lint, tests, version sync',
+      'Request-id correlation'
+    ])">
+      <label for="feature-filter" class="mb-2 block font-mono text-xs tracking-wider text-base-content/50 uppercase">
+        {% trans "Filter" %}
+      </label>
+      <input id="feature-filter" type="search" x-model="query"
+             placeholder="{% trans 'Type to filter…' %}"
+             autocomplete="off">
+
+      <ul class="mt-5 flex flex-wrap gap-2">
         <template x-for="item in filtered" :key="item">
-          <li class="badge badge-outline badge-lg p-4" x-text="item"></li>
-        </template>
-        <template x-if="filtered.length === 0">
-          <li class="text-base-content/50">{% trans "No results found." %}</li>
+          <li class="rounded-lg border border-primary/25 bg-base-100/60 px-3 py-1.5 text-sm text-base-content/80"
+              x-text="item"></li>
         </template>
       </ul>
+
+      <p x-cloak x-show="filtered.length === 0" class="mt-5 text-sm text-base-content/50">
+        {% trans "Nothing matches that." %}
+      </p>
+    </div>
+  </div>
+</section>
+
+{# Closing call to action #}
+<section class="mx-auto w-full max-w-[1280px] px-6 py-[clamp(4rem,8vw,8rem)]">
+  <div class="card-tribal glow-primary relative overflow-hidden px-6 py-14 text-center">
+    <div class="tribal-grid pointer-events-none absolute inset-0 opacity-40" aria-hidden="true"></div>
+    <div class="relative">
+      <h2 class="text-2xl">{% trans "Clone it and start writing your own app" %}</h2>
+      <p class="prose-tribal mx-auto mt-3">
+        {% trans "The parts you would have built first are done. What is left is the part only you can write." %}
+      </p>
+      <p class="mt-8 inline-block rounded-lg border border-primary/25 bg-base-100/80 px-5 py-3 font-mono text-sm text-primary">
+        make demo-up
+      </p>
     </div>
   </div>
 </section>

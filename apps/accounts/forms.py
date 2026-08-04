@@ -7,7 +7,6 @@ from django.contrib.auth.forms import (
     SetPasswordForm,
     UserCreationForm,
 )
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
@@ -39,13 +38,9 @@ class RegisterForm(UserCreationForm):
         model = User
         fields = ("email", "first_name", "last_name", "password1", "password2", "gdpr_consent")
 
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.gdpr_consent = True
-        user.gdpr_consent_date = timezone.now()
-        if commit:
-            user.save()
-        return user
+    # No save() override on purpose: creating the account (and stamping the
+    # consent date with it) belongs to services.register_user, so the management
+    # command and any future API endpoint go through the same code path.
 
 
 class LoginForm(AuthenticationForm):
@@ -82,9 +77,7 @@ class CustomPasswordResetForm(PasswordResetForm):
     email = forms.EmailField(
         label=_("Email"),
         max_length=254,
-        widget=forms.EmailInput(
-            attrs={"autocomplete": "email", "placeholder": "you@example.com"}
-        ),
+        widget=forms.EmailInput(attrs={"autocomplete": "email", "placeholder": "you@example.com"}),
     )
 
 

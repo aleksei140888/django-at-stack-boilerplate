@@ -1,36 +1,48 @@
-<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:'uk' }}"
-      data-theme="light"
+{% load i18n static %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}"
+      data-theme="cybertribal"
       x-data="themeManager()"
-      x-init="initTheme()"
-      :data-theme="theme">
+      x-init="initTheme()">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  {% comment %}
+  Resolves the theme before the first frame. Alpine boots after paint, so without
+  this the page renders once in the wrong theme and then corrects itself — a
+  full-page flash. This mirrors resolveTheme() in static/src/js/theme.js, which
+  is where the rule is tested; the duplication is the price of running before any
+  module loads.
+  {% endcomment %}
+  <script>
+    (function () {
+      var themes = ["cybertribal", "cybertribal-light"];
+      var saved = localStorage.getItem("theme");
+      var prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+      var theme = themes.indexOf(saved) !== -1
+        ? saved
+        : (prefersLight ? "cybertribal-light" : "cybertribal");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+
   {% include "partials/_meta_seo.html" %}
 
-  {# Favicon #}
-  <link rel="icon" type="image/svg+xml" href="{% load static %}{% static 'img/favicon.svg' %}">
+  {# Favicon — placeholder artwork in static/img, replace with your own #}
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
   <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
-  <link rel="manifest" href="{% static 'site.webmanifest' %}">
 
-  {# Vite assets #}
-  {% load static %}
-  {% if debug %}
-    <script type="module" src="http://localhost:5173/@vite/client"></script>
-    <script type="module" src="http://localhost:5173/static/src/js/main.js"></script>
-  {% else %}
-    {% include "partials/_vite_assets.html" %}
-  {% endif %}
+  {% if MEDIA_ORIGIN %}<link rel="preconnect" href="{{ MEDIA_ORIGIN }}" crossorigin>{% endif %}
+
+  {% include "partials/_vite_assets.html" %}
 
   {% block extra_head %}{% endblock %}
 </head>
-<body class="min-h-screen bg-base-100 text-base-content flex flex-col">
+<body class="min-h-[100dvh] bg-base-100 text-base-content flex flex-col antialiased">
 
   {# Skip to main content for accessibility #}
   <a href="#main-content"
-     class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-content">
+     class="sr-only focus:not-sr-only focus:absolute focus:z-modal focus:p-4 focus:bg-primary focus:text-primary-content">
     {% trans "Skip to main content" %}
   </a>
 

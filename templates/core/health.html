@@ -4,126 +4,124 @@
 {% block title %}{% trans "System Health" %} — {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-10 max-w-3xl"
-     x-data="healthDashboard()"
-     x-init="init()">
+{% comment %}
+No x-init="init()": Alpine already calls a component's own init(), and calling it
+again starts a second polling interval on every page load.
+{% endcomment %}
+<div class="mx-auto w-full max-w-[1280px] px-6 py-12" x-data="healthDashboard()">
 
-  <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
-    <h1 class="text-2xl font-bold">{% trans "System Health" %}</h1>
+  <div class="mb-8 flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl">{% trans "System Health" %}</h1>
+      <p class="mt-1 font-mono text-xs text-base-content/50">
+        <span x-cloak x-show="version">v<span x-text="version"></span> ·</span>
+        <span x-cloak x-show="lastUpdated">
+          {% trans "updated" %} <span x-text="lastUpdated"></span>
+          · {% trans "next in" %} <span x-text="countdown"></span>s
+        </span>
+        <span x-cloak x-show="!lastUpdated">{% trans "fetching status…" %}</span>
+      </p>
+    </div>
 
     <div class="flex items-center gap-3">
-      {# Overall status badge #}
-      <div class="badge badge-lg gap-2"
+      <div class="rounded-lg border px-3 py-1.5 text-sm font-medium"
            :class="{
-             'badge-success': status === 'ok',
-             'badge-warning': status === 'degraded',
-             'badge-error':   status === 'error',
-             'badge-ghost':   status === null
+             'border-success/40 text-success': status === 'ok',
+             'border-warning/40 text-warning': status === 'degraded',
+             'border-error/40 text-error':     status === 'error',
+             'border-primary/20 text-base-content/50': status === null
            }">
-        <span x-show="status === 'ok'">● {% trans "Operational" %}</span>
-        <span x-show="status === 'degraded'">● {% trans "Degraded" %}</span>
-        <span x-show="status === 'error'">● {% trans "Error" %}</span>
-        <span x-show="status === null">○ {% trans "Loading…" %}</span>
+        <span x-cloak x-show="status === 'ok'">{% trans "Operational" %}</span>
+        <span x-cloak x-show="status === 'degraded'">{% trans "Degraded" %}</span>
+        <span x-cloak x-show="status === 'error'">{% trans "Error" %}</span>
+        <span x-cloak x-show="status === null">{% trans "Loading…" %}</span>
       </div>
 
-      {# Refresh button #}
-      <button class="btn btn-ghost btn-sm btn-circle"
+      <button class="grid h-9 w-9 place-items-center rounded-lg border border-primary/25 text-primary transition-colors duration-200 hover:bg-primary/10"
               @click="refresh()"
-              :class="{ 'loading': loading }"
               :disabled="loading"
-              title="{% trans 'Refresh now' %}">
+              title="{% trans 'Refresh now' %}"
+              aria-label="{% trans 'Refresh now' %}">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" :class="{ 'animate-spin': loading }"
-             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
         </svg>
       </button>
     </div>
   </div>
 
-  {# Last updated + next refresh countdown #}
-  <p class="text-sm text-base-content/50 mb-6">
-    <span x-show="lastUpdated">
-      {% trans "Updated" %} <span x-text="lastUpdated"></span>
-      · {% trans "next refresh in" %} <span x-text="countdown"></span>s
-    </span>
-    <span x-show="!lastUpdated">{% trans "Fetching status…" %}</span>
-  </p>
-
-  {# Fetch error banner #}
-  <div x-show="fetchError" class="alert alert-error mb-6">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 9v2m0 4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z"/>
+  <div x-cloak x-show="fetchError"
+       class="mb-6 flex items-start gap-3 rounded-lg border border-error/40 bg-error/5 p-4 text-sm text-error">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+      <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
     </svg>
     <span x-text="fetchError"></span>
   </div>
 
   {# Check cards #}
-  <div class="space-y-3">
+  <div class="grid gap-3 md:grid-cols-2">
     <template x-for="[name, check] in Object.entries(checks)" :key="name">
-      <div class="card bg-base-200 shadow-sm">
-        <div class="card-body py-4 px-5 flex flex-row items-center justify-between flex-wrap gap-3">
-
-          <div class="flex items-center gap-3">
-            {# Status dot #}
-            <div class="w-3 h-3 rounded-full shrink-0"
-                 :class="{
-                   'bg-success': check.status === 'ok',
-                   'bg-warning': check.status === 'degraded',
-                   'bg-error':   check.status === 'error'
-                 }">
-            </div>
-            <div>
-              <p class="font-semibold capitalize" x-text="name.replace(/_/g, ' ')"></p>
-              <p class="text-xs text-base-content/50"
-                 x-show="check.detail || check.error || check.vendor || check.workers !== undefined"
-                 x-text="check.error || check.detail || check.vendor || (check.workers !== undefined ? check.workers + ' workers' : '')">
-              </p>
-            </div>
+      <div class="card-tribal flex flex-wrap items-center justify-between gap-3 p-5">
+        <div class="flex items-center gap-3">
+          <span class="h-2.5 w-2.5 shrink-0 rounded-full"
+                :class="{
+                  'bg-success pulse-ring': check.status === 'ok',
+                  'bg-warning': check.status === 'degraded',
+                  'bg-error':   check.status === 'error'
+                }"></span>
+          <div>
+            <p class="font-medium capitalize" x-text="name.replace(/_/g, ' ')"></p>
+            <p class="font-mono text-xs text-base-content/50"
+               x-show="check.detail || check.error || check.vendor || check.backend || check.workers !== undefined"
+               x-text="check.error || check.detail || check.vendor || check.backend || (check.workers !== undefined ? check.workers + ' workers' : '')">
+            </p>
           </div>
-
-          <div class="flex items-center gap-4 text-sm">
-            {# Latency #}
-            <span x-show="check.latency_ms !== undefined"
-                  class="text-base-content/50 tabular-nums"
-                  x-text="check.latency_ms + ' ms'">
-            </span>
-            {# Status badge #}
-            <span class="badge badge-sm"
-                  :class="{
-                    'badge-success': check.status === 'ok',
-                    'badge-warning': check.status === 'degraded',
-                    'badge-error':   check.status === 'error'
-                  }"
-                  x-text="check.status">
-            </span>
-          </div>
-
         </div>
-      </div>
-    </template>
 
-    {# Empty state #}
-    <template x-if="!loading && Object.keys(checks).length === 0 && !fetchError">
-      <div class="text-center py-12 text-base-content/40">{% trans "No checks registered." %}</div>
-    </template>
-  </div>
-
-  {# Skeleton while first load #}
-  <div x-show="loading && Object.keys(checks).length === 0" class="space-y-3 mt-3">
-    <template x-for="i in 3" :key="i">
-      <div class="card bg-base-200 shadow-sm animate-pulse">
-        <div class="card-body py-4 px-5 flex flex-row items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="w-3 h-3 rounded-full bg-base-300"></div>
-            <div class="h-4 w-28 rounded bg-base-300"></div>
-          </div>
-          <div class="h-4 w-16 rounded bg-base-300"></div>
+        <div class="flex items-center gap-4">
+          <span x-show="check.latency_ms !== undefined"
+                class="font-mono text-xs tabular-nums text-base-content/40"
+                x-text="check.latency_ms + ' ms'"></span>
+          <span class="rounded px-2 py-0.5 font-mono text-xs uppercase"
+                :class="{
+                  'bg-success/15 text-success': check.status === 'ok',
+                  'bg-warning/15 text-warning': check.status === 'degraded',
+                  'bg-error/15 text-error':     check.status === 'error'
+                }"
+                x-text="check.status"></span>
         </div>
       </div>
     </template>
   </div>
+
+  {# Shimmer skeletons on first load — no spinners, per DESIGN.md #}
+  <div x-show="loading && Object.keys(checks).length === 0" class="grid gap-3 md:grid-cols-2">
+    <template x-for="i in 4" :key="i">
+      <div class="card-tribal skeleton-shimmer h-[76px]"></div>
+    </template>
+  </div>
+
+  {# Empty state: icon, description, action #}
+  <template x-if="!loading && Object.keys(checks).length === 0 && !fetchError">
+    <div class="card-tribal flex flex-col items-center gap-4 px-6 py-16 text-center">
+      <span class="grid h-12 w-12 place-items-center rounded-lg border border-primary/25 text-primary" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+      </span>
+      <div>
+        <p class="font-medium">{% trans "No checks registered" %}</p>
+        <p class="mt-1 text-sm text-base-content/50">
+          {% trans "Register one with @HealthCheck.register — see docs/playbooks/add-health-check.md." %}
+        </p>
+      </div>
+      <button class="btn-tribal-ghost px-4 py-2 text-sm" @click="refresh()">{% trans "Check again" %}</button>
+    </div>
+  </template>
 
 </div>
 {% endblock %}

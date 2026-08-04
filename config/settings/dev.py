@@ -1,3 +1,5 @@
+"""Local development: DEBUG, debug toolbar, in-process cache, Vite dev server."""
+
 from .base import *  # noqa: F401, F403
 
 DEBUG = True
@@ -10,7 +12,7 @@ MIDDLEWARE = [
 
 INTERNAL_IPS = ["127.0.0.1", "localhost"]
 
-# Use simple cache in dev for easier debugging
+# Simple cache in dev — no Redis required to run `manage.py runserver`.
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -23,7 +25,10 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # Allow all CORS in dev
 CORS_ALLOW_ALL_ORIGINS = True
 
-# Disable password hashing to speed up tests
-PASSWORD_HASHERS = [
-    "django.contrib.auth.hashers.MD5PasswordHasher",
-]
+# `npm run dev` is the expected local workflow, so assets come from the Vite dev
+# server (HMR). Set VITE_DEV_SERVER=False in .env to test the built bundle.
+VITE_DEV_SERVER = env.bool("VITE_DEV_SERVER", default=True)  # noqa: F405
+
+# CSP off in dev: the Vite HMR websocket and the debug toolbar both need a
+# policy loose enough that enforcing one here only produces noise.
+CONTENT_SECURITY_POLICY = ""

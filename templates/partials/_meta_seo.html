@@ -3,7 +3,17 @@
 <title>{% block title %}{% if page_title %}{{ page_title }} — {{ SITE_NAME }}{% else %}{{ SITE_NAME }}{% endif %}{% endblock %}</title>
 <meta name="description" content="{% block meta_description %}{% firstof meta_description '' %}{% endblock %}">
 
-{# Canonical URL — prevents duplicate content #}
+{% comment %}
+Canonical URL — prevents duplicate content.
+
+Do NOT override the `canonical` block with a full <link> tag: Django passes an
+overridden block through the include as a plain string, so the tag would end up
+nested inside href="". Override it with a bare URL, or set `canonical_url` in the
+view's context.
+
+(This is a {% comment %} block, not {# #}: the short form is single-line only,
+and a multi-line one leaks its contents back into the template.)
+{% endcomment %}
 <link rel="canonical" href="{% block canonical %}{{ canonical_url }}{% endblock %}">
 
 {# Robots #}
@@ -20,9 +30,9 @@
 <meta property="og:url" content="{{ canonical_url }}">
 <meta property="og:site_name" content="{{ SITE_NAME }}">
 <meta property="og:image" content="{% block og_image %}{{ default_og_image }}{% endblock %}">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:locale" content="{% block og_locale %}uk_UA{% endblock %}">
+<meta property="og:image:width" content="{{ og_image_width }}">
+<meta property="og:image:height" content="{{ og_image_height }}">
+<meta property="og:locale" content="{% block og_locale %}{{ LANGUAGE_CODE|default:'en'|slice:':2' }}{% endblock %}">
 
 {# ===== Twitter Card ===== #}
 <meta name="twitter:card" content="summary_large_image">
@@ -33,6 +43,5 @@
 {# ===== Hreflang (multilingual) ===== #}
 {% block hreflang %}{% endblock %}
 
-{# Theme color for browser chrome #}
-<meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1e1b4b" media="(prefers-color-scheme: dark)">
+{# Theme color for browser chrome — one value, the design is dark-only #}
+<meta name="theme-color" content="#08040F">

@@ -1,8 +1,8 @@
 from django.conf import settings
-from django.core.mail import send_mail
 from django.shortcuts import redirect, render
 from django.utils.translation import gettext_lazy as _
 
+from . import services
 from .forms import ContactForm
 
 
@@ -57,16 +57,7 @@ def cookies_view(request):
 def contact_view(request):
     form = ContactForm(request.POST or None)
     if form.is_valid():
-        name = form.cleaned_data["name"]
-        email = form.cleaned_data["email"]
-        message = form.cleaned_data["message"]
-        send_mail(
-            subject=f"Contact from {name}",
-            message=f"From: {name} <{email}>\n\n{message}",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[settings.SERVER_EMAIL],
-            fail_silently=True,
-        )
+        services.send_contact_message(**form.cleaned_data)
         return redirect("pages:contact_done")
 
     return render(

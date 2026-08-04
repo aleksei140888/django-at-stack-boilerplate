@@ -1,21 +1,23 @@
 {% load i18n %}
 {% if messages %}
-<div
-  class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full"
-  x-data="{ visible: true }"
-  x-show="visible"
-  role="alert"
-  aria-live="polite"
->
+<div class="pointer-events-none fixed inset-x-4 top-20 z-toast mx-auto flex max-w-sm flex-col gap-2 sm:left-auto sm:right-4 sm:mx-0">
   {% for message in messages %}
     <div
-      class="alert {% if message.tags == 'error' %}alert-error{% elif message.tags == 'success' %}alert-success{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %} shadow-lg"
+      class="animate-enter pointer-events-auto flex items-start gap-3 rounded-lg border bg-base-200/95 p-3 text-sm shadow-2xl backdrop-blur
+             {% if message.tags == 'error' %}border-error/40 text-error{% elif message.tags == 'success' %}border-success/40 text-success{% elif message.tags == 'warning' %}border-warning/40 text-warning{% else %}border-primary/30 text-primary{% endif %}"
+      role="alert"
       x-data="{ show: true }"
+      x-cloak
       x-show="show"
+      x-transition.opacity.duration.300ms
       x-init="setTimeout(() => show = false, 5000)"
     >
-      <span>{{ message }}</span>
-      <button @click="show = false" class="btn btn-ghost btn-xs" aria-label="{% trans 'Close' %}">✕</button>
+      <span class="flex-1 text-base-content/90">{{ message }}</span>
+      <button @click="show = false" class="shrink-0 text-base-content/40 transition-colors hover:text-base-content"
+              aria-label="{% trans 'Close' %}">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
     </div>
   {% endfor %}
 </div>

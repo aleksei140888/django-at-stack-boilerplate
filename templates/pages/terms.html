@@ -5,16 +5,16 @@
 {% block meta_description %}{% trans "Terms and conditions for using our service." %}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-12 max-w-3xl">
+<div class="mx-auto w-full max-w-3xl px-6 py-16">
 
-  <nav class="text-sm breadcrumbs mb-6" aria-label="{% trans 'Breadcrumb' %}">
+  <nav class="breadcrumbs mb-8 text-sm text-base-content/50" aria-label="{% trans 'Breadcrumb' %}">
     <ul>
       <li><a href="{% url 'pages:home' %}">{% trans "Home" %}</a></li>
       <li aria-current="page">{% trans "Terms of Use" %}</li>
     </ul>
   </nav>
 
-  <article class="prose prose-lg max-w-none">
+  <article class="prose-tribal max-w-none">
     <h1>{% trans "Terms of Use" %}</h1>
     <p class="text-base-content/70">{% trans "Last updated: " %}{% now "d F Y" %}</p>
 
