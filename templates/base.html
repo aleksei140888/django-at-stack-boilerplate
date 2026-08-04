@@ -1,25 +1,12 @@
 {% load i18n static %}<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:'en' }}"
-      data-theme="light"
-      x-data="themeManager()"
-      x-init="initTheme()"
-      :data-theme="theme">
+{% comment %}
+The theme is fixed: DESIGN.md specifies dark only, so there is no switcher and
+nothing to restore from localStorage before first paint.
+{% endcomment %}
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" data-theme="cybertribal">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  {% comment %}
-  Applies the saved theme before first paint. Without it the page renders in the
-  light theme for one frame before Alpine boots, which reads as a flash.
-  {% endcomment %}
-  <script>
-    (function () {
-      var saved = localStorage.getItem("theme");
-      var dark = saved ? saved === "dark"
-                       : window.matchMedia("(prefers-color-scheme: dark)").matches;
-      document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
-    })();
-  </script>
 
   {% include "partials/_meta_seo.html" %}
 
@@ -33,11 +20,11 @@
 
   {% block extra_head %}{% endblock %}
 </head>
-<body class="min-h-screen bg-base-100 text-base-content flex flex-col">
+<body class="min-h-[100dvh] bg-base-100 text-base-content flex flex-col antialiased">
 
   {# Skip to main content for accessibility #}
   <a href="#main-content"
-     class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-content">
+     class="sr-only focus:not-sr-only focus:absolute focus:z-modal focus:p-4 focus:bg-primary focus:text-primary-content">
     {% trans "Skip to main content" %}
   </a>
 

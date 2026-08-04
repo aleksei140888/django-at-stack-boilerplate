@@ -12,6 +12,7 @@ advance.
 |---|---|
 | [`architecture.md`](architecture.md) | Where code belongs, how apps stay decoupled, the request path, the settings layers |
 | [`conventions.md`](conventions.md) | Style, commits, versioning, the opt-in gates and what they are for |
+| [`design.md`](design.md) | The Cyber-Tribal system: where each part of [`../DESIGN.md`](../DESIGN.md) lives in the code, and how to retheme |
 | [`testing.md`](testing.md) | Test mechanics: minimum coverage, parallel-run rules, factories, query budgets |
 | [`test-environment.md`](test-environment.md) | `make demo-up`: a running site with data, no Docker or API keys |
 | [`observability.md`](observability.md) | Request ids, structured logs, health checks, metrics — and what to do during an incident |

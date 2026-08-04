@@ -2,13 +2,13 @@
 {% load i18n %}
 
 {% block content %}
-<div class="min-h-[70vh] flex items-center justify-center px-4 py-12">
-  <div class="w-full max-w-md">
-    <div class="card bg-base-200 shadow-xl">
-      <div class="card-body">
-        <h1 class="card-title text-2xl justify-center mb-2">{% block auth_title %}{% endblock %}</h1>
-        {% block auth_content %}{% endblock %}
-      </div>
+<div class="relative flex min-h-[70vh] items-center justify-center overflow-hidden px-6 py-16">
+  <div class="tribal-grid pointer-events-none absolute inset-0 opacity-50" aria-hidden="true"></div>
+
+  <div class="animate-enter relative w-full max-w-md">
+    <div class="card-tribal glow-primary p-6 backdrop-blur-sm sm:p-8">
+      <h1 class="mb-6 text-center text-2xl">{% block auth_title %}{% endblock %}</h1>
+      {% block auth_content %}{% endblock %}
     </div>
     {% block auth_footer %}{% endblock %}
   </div>

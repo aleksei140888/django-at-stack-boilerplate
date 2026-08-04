@@ -16,7 +16,7 @@ make demo-up          # a running site with demo data on :8000 — no Docker, no
 |---|---|
 | Backend | Django 6 + Django REST Framework |
 | Frontend | Alpine.js 3 |
-| Styling | Tailwind CSS 4 + DaisyUI 5 |
+| Styling | Tailwind CSS 4 + DaisyUI 5 (Cyber-Tribal theme) |
 | Build | Vite 6 |
 | Database | PostgreSQL 17 (SQLite for tests and the demo environment) |
 | Cache / queue | Redis + Celery |
@@ -33,12 +33,21 @@ Exact versions live in `pyproject.toml` and `package.json`.
   sync with a client.
 - **Alpine.js for interactivity.** Small enough that a page's behaviour reads next
   to its markup; no component framework to learn.
-- **Tailwind 4 + DaisyUI 5.** Accessible components with light and dark themes,
-  and a bundle that only contains classes actually used.
+- **Tailwind 4 + DaisyUI 5.** A design system expressed as tokens, and a bundle
+  that only contains the classes actually used.
 - **uv.** Dependency resolution measured in milliseconds and a lockfile that is
   actually committed.
 
 ## What is in the box
+
+**Design**
+- A complete visual system — [`DESIGN.md`](DESIGN.md) — implemented as tokens:
+  palette, typography, motion, component classes
+- Self-hosted fonts, inline SVG icons, no external requests
+- Dark-only Cyber-Tribal theme; retheming is one block of CSS
+  ([`docs/design.md`](docs/design.md))
+- Tests for the rules that are checkable: no emoji in the UI, no `h-screen`,
+  no DaisyUI 4 class names that silently stopped applying
 
 **Application**
 - Custom `User` model — email login, roles, GDPR consent, avatar
@@ -131,7 +140,9 @@ make up               # Postgres, Redis, Django, Vite, Celery
    name in `config/celery.py`, `SITE_NAME` in `.env`.
 2. Reset the version to something like `2026.1.0` in all three files
    (`make version-check` verifies them).
-3. Replace the placeholder artwork in `static/img/`.
+3. Reskin it: replace the theme block in `static/src/css/main.css`, the fonts,
+   and the artwork in `static/img/`. Start from
+   [`docs/design.md`](docs/design.md) → "Retheming for your own project".
 4. Rewrite the content pages in `templates/pages/` — privacy, terms, cookies are
    scaffolding, not legal advice.
 5. Rewrite `CLAUDE.md`'s first paragraph for your product, and empty
@@ -145,6 +156,7 @@ make up               # Postgres, Redis, Django, Vite, Celery
 | [`CLAUDE.md`](CLAUDE.md) | Conventions and routing — the working manual |
 | [`docs/architecture.md`](docs/architecture.md) | Where code belongs and how apps stay decoupled |
 | [`docs/conventions.md`](docs/conventions.md) | Style, commits, versioning, gates |
+| [`DESIGN.md`](DESIGN.md) / [`docs/design.md`](docs/design.md) | The visual system, and where it lives in the code |
 | [`docs/testing.md`](docs/testing.md) | Test mechanics and the parallel-run rules |
 | [`docs/test-environment.md`](docs/test-environment.md) | The demo environment and the smoke walk |
 | [`docs/observability.md`](docs/observability.md) | Logs, health, metrics, incident steps |

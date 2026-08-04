@@ -12,41 +12,10 @@ export { apiFetch, getCsrfToken };
 
 // Every component must be registered before Alpine.start(): a component
 // referenced by x-data that was registered afterwards is silently inert.
-
-/**
- * Theme manager — light/dark with system preference detection, persisted to
- * localStorage. The attribute is also written in an inline script in base.html
- * so the correct theme is applied before first paint (no flash of light theme).
- */
-Alpine.data("themeManager", () => ({
-  theme: "light",
-
-  initTheme() {
-    const saved = localStorage.getItem("theme");
-    this.theme =
-      saved ??
-      (window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light");
-    document.documentElement.setAttribute("data-theme", this.theme);
-
-    // Follow the OS only while the user has not made an explicit choice.
-    window
-      .matchMedia("(prefers-color-scheme: dark)")
-      .addEventListener("change", (event) => {
-        if (!localStorage.getItem("theme")) {
-          this.theme = event.matches ? "dark" : "light";
-          document.documentElement.setAttribute("data-theme", this.theme);
-        }
-      });
-  },
-
-  toggleTheme() {
-    this.theme = this.theme === "dark" ? "light" : "dark";
-    localStorage.setItem("theme", this.theme);
-    document.documentElement.setAttribute("data-theme", this.theme);
-  },
-}));
+//
+// There is no theme manager here: the Cyber-Tribal system in DESIGN.md is
+// dark-only, so <html data-theme> is fixed in base.html. docs/design.md has the
+// three steps to bring a switcher back if a second theme is ever added.
 
 /**
  * Cookie consent banner.

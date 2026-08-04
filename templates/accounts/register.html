@@ -20,28 +20,28 @@
 
   {% for field in form %}
     {% if field.name != 'gdpr_consent' %}
-      <div class="form-control mb-4">
-        <label class="label" for="{{ field.id_for_label }}">
-          <span class="label-text">{{ field.label }}{% if field.field.required %} <span class="text-error">*</span>{% endif %}</span>
+      <div class="mb-4">
+        <label class="field-label" for="{{ field.id_for_label }}">
+          {{ field.label }}{% if field.field.required %} <span class="text-error">*{% endif %}</span>
         </label>
         {{ field }}
         {% if field.help_text %}
-          <div class="text-xs text-base-content/60 mt-1 [&_ul]:list-disc [&_ul]:ps-5">{{ field.help_text }}</div>
+          <div class="field-help">{{ field.help_text }}</div>
         {% endif %}
         {% if field.errors %}
-          <div class="text-xs text-error mt-1">{{ field.errors.0 }}</div>
+          <div class="field-error">{{ field.errors.0 }}</div>
         {% endif %}
       </div>
     {% endif %}
   {% endfor %}
 
   {# GDPR consent #}
-  <div class="form-control mb-6">
+  <div class="mb-6">
     {# Plain flex, not `label`: DaisyUI 5 sets white-space: nowrap on .label, #}
     {# so this multi-line consent text would refuse to wrap on a phone.      #}
     <label class="flex cursor-pointer justify-start gap-3 items-start">
       {{ form.gdpr_consent }}
-      <span class="label-text text-sm">
+      <span class="text-sm text-base-content/80">
         {% blocktrans trimmed %}
           I agree to the <a href="/privacy/" class="link link-primary" target="_blank">Privacy Policy</a>
           and <a href="/terms/" class="link link-primary" target="_blank">Terms of Use</a>.
@@ -50,11 +50,11 @@
       </span>
     </label>
     {% if form.gdpr_consent.errors %}
-      <div class="text-xs text-error mt-1">{{ form.gdpr_consent.errors.0 }}</div>
+      <div class="field-error">{{ form.gdpr_consent.errors.0 }}</div>
     {% endif %}
   </div>
 
-  <button type="submit" class="btn btn-primary w-full">{% trans "Create account" %}</button>
+  <button type="submit" class="btn-tribal w-full">{% trans "Create account" %}</button>
 </form>
 {% endblock %}
 

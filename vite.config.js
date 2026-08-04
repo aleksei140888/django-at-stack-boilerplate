@@ -3,10 +3,17 @@ import { resolve } from "path";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [tailwindcss()],
 
   root: resolve(import.meta.dirname, "static/src"),
+
+  // Asset URLs inside the built CSS (@font-face src, background images) are
+  // written relative to this. Django serves the bundle from /static/dist/, so
+  // the default "/" produces /assets/font.woff2 — a 404 on every page, with the
+  // font silently falling back. The dev server keeps "/" because it serves the
+  // same files from its own root.
+  base: command === "build" ? "/static/dist/" : "/",
 
   build: {
     outDir: resolve(import.meta.dirname, "static/dist"),
@@ -47,4 +54,4 @@ export default defineConfig({
       interval: 300,
     },
   },
-});
+}));

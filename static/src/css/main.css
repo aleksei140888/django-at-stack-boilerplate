@@ -1,5 +1,20 @@
+/* ============================================================================
+   Cyber-Tribal — the design system in DESIGN.md, expressed as tokens.
+   Change the theme block below and the whole UI follows; templates use DaisyUI
+   semantic classes (bg-base-200, text-primary) rather than raw colours.
+   ============================================================================ */
+
 /* Tailwind CSS v4 — single import, no config file needed */
 @import "tailwindcss";
+
+/* Self-hosted fonts: CSP allows font-src 'self' only, and a template that
+   depends on a third-party font host breaks the first time that host is
+   blocked. See docs/design.md for swapping in Azonix, which cannot be
+   redistributed here. */
+@import "@fontsource/orbitron/latin-400.css";
+@import "@fontsource/orbitron/latin-500.css";
+@import "@fontsource/orbitron/latin-700.css";
+@import "@fontsource/jetbrains-mono/latin-400.css";
 
 /* Where to look for class names. Tailwind v4 scans the directory of the CSS file
    by default, which here is the Vite root (static/src) — it contains no
@@ -9,22 +24,118 @@
 @source "../../../apps";
 @source "../js";
 
-/* DaisyUI 5. `--default` / `--prefersdark` decide which theme applies when the
-   page has no data-theme yet; base.html sets one before first paint anyway. */
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark;
+  themes: false;
 }
 
-/* ===== Base styles ===== */
+/* The design is dark-only ("Light/Dark: ✗ No / ✓ Full"), so there is one theme
+   and no switcher. Adding a light variant later means a second @plugin block
+   with `default: true` and re-enabling the toggle — see docs/design.md. */
+@plugin "daisyui/theme" {
+  name: "cybertribal";
+  default: true;
+  prefersdark: true;
+  color-scheme: dark;
+
+  /* Surfaces: indigo-tinted near-black. Never pure white, never pure black. */
+  --color-base-100: oklch(12.3% 0.029 302.5); /* #08040F */
+  --color-base-200: oklch(17.0% 0.045 298.2); /* #120A20 */
+  --color-base-300: oklch(21.6% 0.070 297.7); /* #1E1035 */
+  --color-base-content: oklch(96.6% 0.021 227.5); /* #E6F7FF */
+
+  /* Electric Cyan — accent highlight, links, focus. Its content colour is Deep
+     Indigo, straight from the button-primary token in DESIGN.md. */
+  --color-primary: oklch(90.5% 0.155 194.8); /* #00FFFF */
+  --color-primary-content: oklch(33.9% 0.179 301.7); /* #4B0082 */
+
+  /* Jungle Green — the one non-neon in the palette; carries secondary surfaces. */
+  --color-secondary: oklch(66.4% 0.122 169.4); /* #29AB87 */
+  --color-secondary-content: oklch(12.3% 0.029 302.5);
+
+  /* Blacklight Purple — decorative accent. */
+  --color-accent: oklch(60.9% 0.303 312.9); /* #BF00FF */
+  --color-accent-content: oklch(96.6% 0.021 227.5);
+
+  /* Deep Indigo — emphasis surfaces. */
+  --color-neutral: oklch(33.9% 0.179 301.7); /* #4B0082 */
+  --color-neutral-content: oklch(96.6% 0.021 227.5);
+
+  --color-info: oklch(90.5% 0.155 194.8);
+  --color-info-content: oklch(17.4% 0.026 235.8);
+  --color-success: oklch(66.4% 0.122 169.4);
+  --color-success-content: oklch(12.3% 0.029 302.5);
+  /* Solar Orange warns; errors stay red, because an error that reads as a warm
+     accent is an error nobody notices. */
+  --color-warning: oklch(66.0% 0.229 35.4); /* #FF4500 */
+  --color-warning-content: oklch(12.3% 0.029 302.5);
+  --color-error: oklch(65.6% 0.235 13.3); /* #FF3366 */
+  --color-error-content: oklch(96.6% 0.021 227.5);
+
+  /* Base corner radius 8px across every surface. */
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.5rem;
+
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@theme {
+  /* Azonix first: drop the file into static/fonts and add the @font-face block
+     from docs/design.md, and every display surface picks it up. Orbitron is the
+     shipped stand-in — same era, redistributable. */
+  --font-display: "Azonix", "Orbitron", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Azonix", "Orbitron", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Palette members DaisyUI has no slot for, kept as tokens so decoration can
+     reference them by name instead of by hex. */
+  --color-tribal-magenta: oklch(70.2% 0.322 328.4); /* #FF00FF */
+  --color-tribal-solar: oklch(66.0% 0.229 35.4); /* #FF4500 */
+
+  /* Motion. Spring (stiffness 120, damping 20) approximated as a curve with a
+     small overshoot — confident and weighted, not bouncy. */
+  --ease-spring: cubic-bezier(0.34, 1.26, 0.64, 1);
+  --duration-enter: 540ms;
+  --duration-hover: 200ms;
+  --duration-page: 300ms;
+
+  /* z-index contract from DESIGN.md. Utilities below expose these by name so a
+     stray z-[9999] never has to be invented. */
+  --z-base: 0;
+  --z-sticky-nav: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+  --z-toast: 500;
+}
+
+/* ===== Base ===== */
 @layer base {
-  body {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  html {
+    scroll-behavior: smooth;
   }
 
-  :focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+  body {
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Two off-axis glows behind everything: the "neon in a dark room" ground the
+       whole palette sits on. Fixed attachment keeps them from scrolling away. */
+    background-image:
+      radial-gradient(
+        60rem 40rem at 12% -10%,
+        color-mix(in oklch, var(--color-accent) 18%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        50rem 35rem at 105% 8%,
+        color-mix(in oklch, var(--color-primary) 12%, transparent),
+        transparent 60%
+      );
+    background-attachment: fixed;
   }
 
   h1,
@@ -33,8 +144,24 @@
   h4,
   h5,
   h6 {
+    font-family: var(--font-display);
     font-weight: 700;
-    line-height: 1.2;
+    line-height: 1.15;
+    /* Tight tracking is what makes a geometric display face read as a logotype
+       rather than as stretched body copy. */
+    letter-spacing: -0.01em;
+  }
+
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: var(--font-mono);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
   /* Django renders form widgets without CSS classes, so the base look is applied
@@ -50,14 +177,23 @@
   input[type="tel"],
   input[type="number"],
   input[type="date"],
+  input[type="file"],
   textarea,
   select {
     width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--color-base-300);
-    border-radius: var(--radius-field, 0.5rem);
-    background-color: var(--color-base-100);
+    max-width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid color-mix(in oklch, var(--color-primary) 22%, transparent);
+    border-radius: var(--radius-field);
+    background-color: color-mix(in oklch, var(--color-base-100) 70%, transparent);
     color: var(--color-base-content);
+    font-family: var(--font-body);
+    transition: border-color var(--duration-hover) ease-out;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: color-mix(in oklch, var(--color-base-content) 40%, transparent);
   }
 
   input[type="text"]:focus,
@@ -68,10 +204,12 @@
   input[type="tel"]:focus,
   input[type="number"]:focus,
   input[type="date"]:focus,
+  input[type="file"]:focus,
   textarea:focus,
   select:focus {
     outline: 2px solid var(--color-primary);
-    outline-offset: 1px;
+    outline-offset: 2px;
+    border-color: var(--color-primary);
   }
 
   input[type="checkbox"],
@@ -79,6 +217,95 @@
     accent-color: var(--color-primary);
     width: 1.15rem;
     height: 1.15rem;
+  }
+}
+
+/* ===== Components =====
+   The four surfaces DESIGN.md specifies by name. Defined once here so a template
+   says what a thing *is* (.btn-tribal) instead of repeating eight utilities, and
+   so changing the button treatment is one edit rather than thirty. */
+@layer components {
+  .btn-tribal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-field);
+    background-color: var(--color-primary);
+    color: var(--color-primary-content);
+    font-weight: 600;
+    /* No outer glow on the primary button — DESIGN.md is explicit, and a glowing
+       CTA in a page full of glows stops reading as the primary action. */
+    transition:
+      filter var(--duration-hover) ease-out,
+      transform var(--duration-hover) var(--ease-spring),
+      box-shadow var(--duration-hover) ease-out;
+  }
+
+  .btn-tribal:hover {
+    filter: brightness(0.92);
+    box-shadow: 0 0.5rem 1.25rem -0.75rem color-mix(in oklch, var(--color-primary) 70%, transparent);
+  }
+
+  .btn-tribal:active {
+    transform: translateY(1px);
+  }
+
+  .btn-tribal-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: 1.5px solid color-mix(in oklch, var(--color-primary) 40%, transparent);
+    border-radius: var(--radius-field);
+    color: var(--color-primary);
+    font-weight: 600;
+    transition:
+      background-color var(--duration-hover) ease-out,
+      border-color var(--duration-hover) ease-out;
+  }
+
+  .btn-tribal-ghost:hover {
+    background-color: color-mix(in oklch, var(--color-primary) 12%, transparent);
+    border-color: var(--color-primary);
+  }
+
+  .card-tribal {
+    border: 1px solid color-mix(in oklch, var(--color-primary) 20%, transparent);
+    border-radius: var(--radius-box);
+    background-color: color-mix(in oklch, var(--color-base-200) 70%, transparent);
+    box-shadow: 0 2px 12px rgb(0 0 0 / 0.35);
+  }
+
+  /* Inputs: label above, error below. No floating labels anywhere. */
+  .field-label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: color-mix(in oklch, var(--color-base-content) 80%, transparent);
+  }
+
+  .field-help {
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: color-mix(in oklch, var(--color-base-content) 55%, transparent);
+  }
+
+  .field-help ul {
+    padding-left: 1.1rem;
+    list-style: disc;
+  }
+
+  .field-error {
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--color-error);
   }
 }
 
@@ -91,19 +318,178 @@
     display: none !important;
   }
 
-  .prose {
-    color: var(--color-base-content);
+  .z-sticky-nav {
+    z-index: var(--z-sticky-nav);
+  }
+  .z-overlay {
+    z-index: var(--z-overlay);
+  }
+  .z-modal {
+    z-index: var(--z-modal);
+  }
+  .z-toast {
+    z-index: var(--z-toast);
   }
 
-  .prose h1,
-  .prose h2,
-  .prose h3 {
-    color: var(--color-base-content);
+  /* Neon. Glows are decoration, so they live on containers and headings — never
+     on the primary button, which DESIGN.md explicitly keeps flat. */
+  .glow-primary {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--color-primary) 35%, transparent),
+      0 0 2rem -0.5rem color-mix(in oklch, var(--color-primary) 45%, transparent);
   }
 
-  .prose a {
+  .glow-accent {
+    box-shadow:
+      0 0 0 1px color-mix(in oklch, var(--color-accent) 35%, transparent),
+      0 0 2.5rem -0.5rem color-mix(in oklch, var(--color-accent) 50%, transparent);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 1.5rem color-mix(in oklch, var(--color-primary) 55%, transparent);
+  }
+
+  .text-tribal-gradient {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-primary),
+      var(--color-tribal-magenta) 45%,
+      var(--color-accent)
+    );
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Ancient geometry through a digital filter: a hard grid with a soft glow
+     over it. Pure CSS, so it costs no request and scales to any container. */
+  .tribal-grid {
+    background-image:
+      linear-gradient(
+        color-mix(in oklch, var(--color-primary) 8%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        color-mix(in oklch, var(--color-primary) 8%, transparent) 1px,
+        transparent 1px
+      );
+    background-size: 3rem 3rem;
+  }
+
+  .neon-rule {
+    height: 1px;
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-primary),
+      var(--color-tribal-magenta),
+      transparent
+    );
+  }
+
+  /* Entry: fade + 16px rise over 540ms. Transform and opacity only. */
+  .animate-enter {
+    animation: enter var(--duration-enter) var(--ease-spring) both;
+  }
+
+  /* Staggered cascade, 120ms between items. Nine steps is a deliberate ceiling:
+     past that the last card arrives a second late and the page reads as slow. */
+  .enter-cascade > * {
+    animation: enter var(--duration-enter) var(--ease-spring) both;
+  }
+  .enter-cascade > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .enter-cascade > *:nth-child(2) {
+    animation-delay: 120ms;
+  }
+  .enter-cascade > *:nth-child(3) {
+    animation-delay: 240ms;
+  }
+  .enter-cascade > *:nth-child(4) {
+    animation-delay: 360ms;
+  }
+  .enter-cascade > *:nth-child(5) {
+    animation-delay: 480ms;
+  }
+  .enter-cascade > *:nth-child(6) {
+    animation-delay: 600ms;
+  }
+  .enter-cascade > *:nth-child(n + 7) {
+    animation-delay: 720ms;
+  }
+
+  .hover-lift {
+    transition:
+      transform var(--duration-hover) var(--ease-spring),
+      box-shadow var(--duration-hover) ease-out;
+  }
+  .hover-lift:hover {
+    transform: scale(1.03);
+    box-shadow: 0 1rem 2.5rem -1rem color-mix(in oklch, var(--color-accent) 55%, transparent);
+  }
+
+  /* Skeletons shimmer rather than spin (DESIGN.md). */
+  .skeleton-shimmer {
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklch, var(--color-primary) 14%, transparent),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  .pulse-ring {
+    animation: pulse-ring 2.4s var(--ease-spring) infinite;
+  }
+
+  .prose-tribal {
+    color: color-mix(in oklch, var(--color-base-content) 82%, transparent);
+    /* 72ch, straight from the typography spec. */
+    max-width: 72ch;
+    line-height: 1.6;
+  }
+
+  .prose-tribal a {
     color: var(--color-primary);
     text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  /* No typography plugin in the dependency tree — long-form content pages are
+     rare enough that a handful of rules beats another build dependency. */
+  .prose-tribal h2 {
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
+    color: var(--color-base-content);
+  }
+
+  .prose-tribal h3 {
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.125rem;
+    color: var(--color-base-content);
+  }
+
+  .prose-tribal p {
+    margin-bottom: 1rem;
+  }
+
+  .prose-tribal ul {
+    margin: 0 0 1rem 0;
+    padding-left: 1.25rem;
+    list-style: disc;
+  }
+
+  .prose-tribal li {
+    margin-bottom: 0.375rem;
+  }
+
+  .prose-tribal strong {
+    color: var(--color-base-content);
   }
 
   .sr-only {
@@ -127,5 +513,49 @@
     overflow: visible;
     clip: auto;
     white-space: normal;
+  }
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes pulse-ring {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.06);
+  }
+}
+
+/* Motion is decoration here; nothing in the UI depends on it to be usable. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

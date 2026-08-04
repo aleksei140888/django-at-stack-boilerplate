@@ -4,12 +4,13 @@
 {% block title %}500 — {% trans "Server error" %} — {{ SITE_NAME }}{% endblock %}
 
 {% block content %}
-<div class="min-h-[70vh] flex items-center justify-center px-4">
-  <div class="text-center max-w-md">
+<div class="relative flex min-h-[70vh] items-center justify-center overflow-hidden px-6">
+  <div class="tribal-grid pointer-events-none absolute inset-0 opacity-40" aria-hidden="true"></div>
+  <div class="animate-enter relative max-w-md text-center">
     <p class="text-9xl font-black text-error/20 select-none leading-none">500</p>
-    <h1 class="text-3xl font-bold mt-4 mb-4">{% trans "Server error" %}</h1>
-    <p class="text-base-content/60 mb-8">{% trans "Something went wrong on our end. We've been notified and are working to fix it." %}</p>
-    <a href="{% url 'pages:home' %}" class="btn btn-primary">{% trans "Go to homepage" %}</a>
+    <h1 class="mt-4 mb-4 text-2xl">{% trans "Server error" %}</h1>
+    <p class="prose-tribal mx-auto mb-8">{% trans "Something went wrong on our end. We've been notified and are working to fix it." %}</p>
+    <a href="{% url 'pages:home' %}" class="btn-tribal">{% trans "Go to homepage" %}</a>
   </div>
 </div>
 {% endblock %}

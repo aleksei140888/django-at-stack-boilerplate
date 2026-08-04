@@ -20,6 +20,7 @@ version numbers, because a restated version number goes stale.
 |---|---|
 | Where a piece of code belongs, how apps talk to each other | [`architecture.md`](docs/architecture.md) |
 | Naming, commits, versioning, style, opt-in gates | [`conventions.md`](docs/conventions.md) |
+| Anything visual — colour, type, spacing, motion, components | [`design.md`](docs/design.md), specified in [`DESIGN.md`](DESIGN.md) |
 | Writing tests — factories, parallel runs, budgets | [`testing.md`](docs/testing.md) |
 | Getting a running site with data to click through | [`test-environment.md`](docs/test-environment.md) |
 | Logs, metrics, health checks, an incident in production | [`observability.md`](docs/observability.md) |
@@ -69,10 +70,17 @@ exactly that on every page it walks.
 
 **Frontend.** Alpine components are registered in `main.js` before
 `Alpine.start()`; requests go through `apiFetch(url, options)`, which attaches the
-CSRF token; the theme lives in `data-theme` on `<html>`. Tailwind finds class
-names through the `@source` lines in `main.css` — a new template directory outside
-`templates/` and `apps/` needs a line there, or its classes are silently dropped
-from the bundle.
+CSRF token. Tailwind finds class names through the `@source` lines in `main.css` —
+a new template directory outside `templates/` and `apps/` needs a line there, or
+its classes are silently dropped from the bundle.
+
+**Design.** The visual system is [`DESIGN.md`](DESIGN.md); how it maps onto the
+code is [`docs/design.md`](docs/design.md). Templates use semantic classes
+(`bg-base-200`, `text-primary`) and the component classes (`.btn-tribal`,
+`.card-tribal`, `.field-label`) — never raw hex, so retheming stays one block of
+CSS. The theme is dark-only and fixed on `<html>`; there is no switcher. No emoji
+in the UI (inline SVG icons instead), no `h-screen` (use `min-h-[100dvh]`), and
+`apps/core/tests/test_design.py` enforces the rules that are checkable.
 
 **Version.** `YYYY.M.PATCH`, identical in `pyproject.toml`, `package.json` and
 `package-lock.json`. The same commit that changes code bumps it, otherwise

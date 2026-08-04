@@ -44,6 +44,9 @@ IGNORED_CONSOLE_PATTERNS = (
 #: "hanging for a third minute" is not a result.
 PAGE_TIMEOUT_MS = 15_000
 
+#: Long enough for the staggered entry animations to finish before a screenshot.
+ANIMATION_SETTLE_MS = 1_400
+
 DESKTOP_VIEWPORT = {"width": 1280, "height": 900}
 
 #: Widths every page must fit without horizontal scrolling. 360 is the narrowest
@@ -227,6 +230,11 @@ def run_checks(base_url: str, checks: list[PageCheck], headed: bool) -> Report:
                 console_errors.clear()
                 response = page.goto(f"{base_url}{check.path}", wait_until="load")
                 report.checked += 1
+
+                # Entry animations cascade for up to ~1.3s (DESIGN.md: 540ms per
+                # item, 120ms apart). Screenshotting on `load` catches the later
+                # cards mid-fade and makes every review look like a rendering bug.
+                page.wait_for_timeout(ANIMATION_SETTLE_MS)
 
                 page.screenshot(path=str(SCREENSHOT_DIR / f"{check.name}.png"), full_page=True)
 

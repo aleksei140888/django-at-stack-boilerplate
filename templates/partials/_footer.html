@@ -1,15 +1,17 @@
 {% load i18n %}
-<footer class="footer footer-center p-6 sm:p-10 bg-base-200 text-base-content" role="contentinfo">
-  {# flex-wrap, not grid-flow-col: five links in one non-wrapping row are wider #}
-  {# than a 360px viewport and push the whole page into horizontal scrolling.   #}
-  <nav class="flex flex-wrap justify-center gap-x-4 gap-y-2" aria-label="{% trans 'Footer navigation' %}">
-    <a href="{% url 'pages:home' %}" class="link link-hover">{% trans "Home" %}</a>
-    <a href="{% url 'pages:contact' %}" class="link link-hover">{% trans "Contact" %}</a>
-    <a href="{% url 'pages:privacy' %}" class="link link-hover">{% trans "Privacy Policy" %}</a>
-    <a href="{% url 'pages:terms' %}" class="link link-hover">{% trans "Terms" %}</a>
-    <a href="{% url 'pages:cookies' %}" class="link link-hover">{% trans "Cookies" %}</a>
-  </nav>
-  <aside>
-    <p>© {% now "Y" %} {{ SITE_NAME }}. {% trans "All rights reserved." %}</p>
-  </aside>
+<footer class="border-t border-primary/15 bg-base-200/60" role="contentinfo">
+  <div class="neon-rule" aria-hidden="true"></div>
+  <div class="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-6 py-10 sm:flex-row sm:items-center sm:justify-between">
+    {# flex-wrap, not a single non-wrapping row: five links are wider than a 360px viewport #}
+    <nav class="flex flex-wrap gap-x-5 gap-y-2 text-sm" aria-label="{% trans 'Footer navigation' %}">
+      <a href="{% url 'pages:home' %}" class="text-base-content/60 transition-colors duration-200 hover:text-primary">{% trans "Home" %}</a>
+      <a href="{% url 'pages:contact' %}" class="text-base-content/60 transition-colors duration-200 hover:text-primary">{% trans "Contact" %}</a>
+      <a href="{% url 'pages:privacy' %}" class="text-base-content/60 transition-colors duration-200 hover:text-primary">{% trans "Privacy Policy" %}</a>
+      <a href="{% url 'pages:terms' %}" class="text-base-content/60 transition-colors duration-200 hover:text-primary">{% trans "Terms" %}</a>
+      <a href="{% url 'pages:cookies' %}" class="text-base-content/60 transition-colors duration-200 hover:text-primary">{% trans "Cookies" %}</a>
+    </nav>
+    <p class="font-mono text-xs text-base-content/40">
+      © {% now "Y" %} {{ SITE_NAME }} · v{{ APP_VERSION }}
+    </p>
+  </div>
 </footer>

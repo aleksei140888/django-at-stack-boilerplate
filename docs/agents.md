@@ -15,6 +15,12 @@ How and when to write here: [`../.claude/skills/memory/SKILL.md`](../.claude/ski
 
 ## Index
 
+**Design system**
+- "Vite `base` has to match where Django serves the bundle" → every font 404s and
+  the typography silently falls back
+- "DaisyUI 5 removed `form-control`, `label-text`, `input-bordered`" → no error,
+  the element just loses its styling
+
 **Frontend / templates / CSS**
 - "Multi-line `{# #}` comments leak into the page" → Django's short comment form
   is single-line only
@@ -59,6 +65,10 @@ better occasion.
   isort `9.0.0b1`). Check what it wrote before committing.
 - Django's password `help_text` is an HTML `<ul>`, not a sentence. Any container
   that does not wrap will overflow because of it.
+- `<input type="file">` has an intrinsic width wider than a 360px viewport and is
+  the one widget easy to miss when styling form fields by element selector.
+- Staggered entry animations make any screenshot taken on `load` look broken —
+  the later items are still mid-fade. `make demo-smoke` waits them out.
 
 ---
 
@@ -150,13 +160,17 @@ DaisyUI 5 also renamed the CSS variables — `oklch(var(--p))` from v4 is now
 
 ## `x-cloak` on everything visible by default (2026-08)
 
-**Context.** The cookie banner, flash messages and both theme icons were visible
-for a frame before Alpine initialised.
+**Context.** The cookie banner, flash messages and (while the theme switcher
+still existed) both theme icons were visible for a frame before Alpine
+initialised.
 
 **Decision.** Every element that is visible by default and hidden by `x-show`
 carries `x-cloak`; `[x-cloak] { display: none !important }` lives in `main.css`.
-The saved theme is applied by a tiny inline script in `<head>`, before Alpine
-loads.
+
+The same class of problem applies to anything decided in JS before first paint. It
+is why the theme switcher, while it existed, needed an inline script in `<head>`
+to apply the stored value — worth remembering if a second theme is ever added
+back (docs/design.md).
 
 **Reason.** `x-show` only takes effect after Alpine boots. Until then the browser
 renders the element as written, which is a visible flash and a layout shift.
@@ -265,3 +279,45 @@ reformatted them. The same files kept coming back dirty.
 **Reason.** `extend-exclude` applies only to paths black discovered by walking a
 directory. pre-commit passes filenames explicitly, and those bypass it —
 `force-exclude` is the flag that applies to explicit paths too.
+
+
+---
+
+## Vite `base` has to match where Django serves the bundle (2026-08)
+
+**Context.** Self-hosted fonts were added through `@fontsource`. The build emitted
+the woff2 files correctly and Django served them correctly, but every page logged
+three 404s and rendered in the fallback font.
+
+**Decision.**
+
+```js
+base: command === "build" ? "/static/dist/" : "/",
+```
+
+**Reason.** Vite writes asset URLs inside the built CSS relative to `base`, which
+defaults to `/`. The `@font-face` rules therefore pointed at `/assets/font.woff2`
+while the bundle is served from `/static/dist/`. Nothing fails loudly: the CSS
+parses, the page renders, and the browser quietly falls back to the next font in
+the stack. The dev server keeps `/` because it serves the same files from its own
+root.
+
+The same trap applies to any `url()` in the CSS — background images, masks,
+cursors — not just fonts.
+
+---
+
+## DaisyUI 5 removed `form-control`, `label-text`, `input-bordered` (2026-08)
+
+**Context.** After the DaisyUI 4 → 5 upgrade, form fields and help text lost their
+layout on every auth page.
+
+**Decision.** Project component classes (`.field-label`, `.field-help`,
+`.field-error`, `.btn-tribal`, `.card-tribal`) defined once in
+`@layer components`, and a test rejecting the removed class names in any template.
+
+**Reason.** Removed utility classes do not error — they stop matching, and the
+element keeps rendering with whatever is left. There is no console warning and no
+build failure; the only signal is a screenshot that looks slightly wrong. Owning
+the handful of component classes the design actually needs also means a retheme
+touches one CSS block instead of every template.
