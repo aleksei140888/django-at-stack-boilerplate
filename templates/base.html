@@ -10,14 +10,18 @@
   {% comment %}
   Resolves the theme before the first frame. Alpine boots after paint, so without
   this the page renders once in the wrong theme and then corrects itself — a
-  full-page flash. Kept in sync with themeManager in main.js; the duplication is
-  the price of running before any module loads.
+  full-page flash. This mirrors resolveTheme() in static/src/js/theme.js, which
+  is where the rule is tested; the duplication is the price of running before any
+  module loads.
   {% endcomment %}
   <script>
     (function () {
+      var themes = ["cybertribal", "cybertribal-light"];
       var saved = localStorage.getItem("theme");
       var prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-      var theme = saved || (prefersLight ? "cybertribal-light" : "cybertribal");
+      var theme = themes.indexOf(saved) !== -1
+        ? saved
+        : (prefersLight ? "cybertribal-light" : "cybertribal");
       document.documentElement.setAttribute("data-theme", theme);
     })();
   </script>

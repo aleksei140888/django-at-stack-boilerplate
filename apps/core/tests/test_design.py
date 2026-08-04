@@ -146,3 +146,17 @@ class TestRenderedPages:
         assert "localStorage.getItem" in head
         # Before the bundle: a module script would run after paint either way.
         assert head.index("localStorage.getItem") < head.index("dist/main.js")
+
+    def test_stored_theme_is_validated_before_first_paint(self, client):
+        """The inline script must check the stored value against an allow-list.
+
+        It is a copy of resolveTheme() in theme.js (tested there) and can drift.
+        A value left by an older build would otherwise be written to data-theme
+        verbatim, pinning the page to a theme that has no rules.
+        """
+        head = client.get(reverse("pages:home")).content.decode().split("</head>")[0]
+        script = head[head.index("<script>") : head.index("</script>")]
+
+        assert '"cybertribal"' in script
+        assert '"cybertribal-light"' in script
+        assert "indexOf" in script

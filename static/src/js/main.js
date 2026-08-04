@@ -6,22 +6,16 @@ import "../css/main.css";
 import Alpine from "alpinejs";
 
 import { apiFetch, getCsrfToken } from "./apiFetch.js";
+import { isKnownTheme, resolveTheme, THEME_COLORS, THEMES } from "./theme.js";
 
 // Re-exported so templates and other modules have a single import surface.
-export { apiFetch, getCsrfToken };
+export { apiFetch, getCsrfToken, THEMES };
 
 // Every component must be registered before Alpine.start(): a component
 // referenced by x-data that was registered afterwards is silently inert.
 
-// Theme names must match the @plugin "daisyui/theme" blocks in main.css. An
-// unknown value here leaves data-theme pointing at a theme that does not exist,
-// and the page renders with no colours at all.
-export const THEMES = { dark: "cybertribal", light: "cybertribal-light" };
-
-// Kept in sync with the browser-chrome colour, which cannot follow data-theme
-// from CSS — it is a meta tag and has to be written by hand.
-const THEME_COLORS = { [THEMES.dark]: "#08040F", [THEMES.light]: "#F5F2FA" };
-
+// The browser-chrome colour cannot follow data-theme from CSS — it is a meta tag
+// and has to be written by hand on every change.
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
   const meta = document.querySelector('meta[name="theme-color"]');
@@ -31,24 +25,28 @@ function applyTheme(theme) {
 /**
  * Theme switcher.
  *
- * The stored choice wins; without one, the OS preference decides, and dark is
- * the fallback when the OS expresses none — dark is the design, light is its
- * companion. The same resolution runs in an inline script in <head> before
- * first paint, otherwise the first frame is drawn in the wrong theme.
+ * Resolution lives in theme.js so it can be unit tested; the same rule runs in
+ * an inline script in <head> before first paint, otherwise the first frame is
+ * drawn in the wrong theme.
  */
 Alpine.data("themeManager", () => ({
   theme: THEMES.dark,
 
   initTheme() {
-    const saved = localStorage.getItem("theme");
-    const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-    this.theme = saved ?? (prefersLight ? THEMES.light : THEMES.dark);
+    const stored = localStorage.getItem("theme");
+    const media = window.matchMedia("(prefers-color-scheme: light)");
+
+    // A value left by an older build would otherwise pin the page to a theme
+    // that does not exist and never fall back to the OS preference again.
+    if (stored !== null && !isKnownTheme(stored)) localStorage.removeItem("theme");
+
+    this.theme = resolveTheme(stored, media.matches);
     applyTheme(this.theme);
 
     // Follow the OS only while the user has not made an explicit choice.
-    window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", (event) => {
-      if (!localStorage.getItem("theme")) {
-        this.theme = event.matches ? THEMES.light : THEMES.dark;
+    media.addEventListener("change", (event) => {
+      if (!isKnownTheme(localStorage.getItem("theme"))) {
+        this.theme = resolveTheme(null, event.matches);
         applyTheme(this.theme);
       }
     });

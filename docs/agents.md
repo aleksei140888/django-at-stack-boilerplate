@@ -16,6 +16,8 @@ How and when to write here: [`../.claude/skills/memory/SKILL.md`](../.claude/ski
 ## Index
 
 **Design system**
+- "A renamed theme strands every browser that stored the old name" → validate the
+  stored value against an allow-list, in both the module and the inline script
 - "Vite `base` has to match where Django serves the bundle" → every font 404s and
   the typography silently falls back
 - "DaisyUI 5 removed `form-control`, `label-text`, `input-bordered`" → no error,
@@ -321,3 +323,33 @@ element keeps rendering with whatever is left. There is no console warning and n
 build failure; the only signal is a screenshot that looks slightly wrong. Owning
 the handful of component classes the design actually needs also means a retheme
 touches one CSS block instead of every template.
+
+
+---
+
+## A renamed theme strands every browser that stored the old name (2026-08)
+
+**Context.** The theme switcher was restored with theme names `cybertribal` and
+`cybertribal-light`. An earlier build had stored `"dark"` / `"light"` in
+localStorage under the same key. Browsers that had visited before got
+`data-theme="dark"` — a theme with no rules.
+
+**Symptom, and why it is easy to miss.** The page is not obviously broken: DaisyUI
+falls back to the default palette, so it renders in dark and looks fine. But
+`data-theme` claims something else, the `[data-theme="cybertribal-light"]`
+overrides can never match, and the switcher's `isDark` disagrees with what is on
+screen — so the first click appears to do nothing while flipping the state.
+
+**Decision.** Resolution moved into `static/src/js/theme.js` with an allow-list:
+an unrecognised stored value is ignored and removed, and the OS preference
+decides instead. The inline pre-paint script in `base.html` carries the same
+check, since it runs before any module loads.
+
+**Reason.** localStorage outlives deployments. Any value read from it is input
+from a previous version of your own code, and deserves the same suspicion as
+input from a user. Renaming a theme — or a feature flag, or a saved filter — is
+enough to strand every returning visitor.
+
+Both copies are covered: `theme.test.js` tests the rule, and a Django test
+asserts the inline script still has the allow-list, because a duplicated rule is
+exactly the kind that drifts.
