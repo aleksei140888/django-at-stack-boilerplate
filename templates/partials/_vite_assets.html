@@ -1,7 +1,14 @@
 {% load static %}
-{# This partial is replaced with actual Vite manifest-generated tags in production.
-   For a simple setup, Vite outputs hashed filenames into static/dist/manifest.json.
-   Use django-vite or a custom tag for full manifest support.
-   Below is a fallback for when static files are compiled manually. #}
-<link rel="stylesheet" href="{% static 'dist/main.css' %}">
-<script type="module" src="{% static 'dist/main.js' %}"></script>
+{% if VITE_DEV_SERVER %}
+  {# Development: assets come from the Vite dev server, with HMR. #}
+  <script type="module" src="{{ VITE_DEV_SERVER_URL }}/@vite/client"></script>
+  <script type="module" src="{{ VITE_DEV_SERVER_URL }}/js/main.js"></script>
+{% else %}
+  {% comment %}
+  Everywhere else: the compiled bundle, served through Django staticfiles.
+  Entry filenames are stable (see vite.config.js) — cache busting comes from
+  ManifestStaticFilesStorage hashing them during collectstatic.
+  {% endcomment %}
+  <link rel="stylesheet" href="{% static 'dist/main.css' %}">
+  <script type="module" src="{% static 'dist/main.js' %}" defer></script>
+{% endif %}

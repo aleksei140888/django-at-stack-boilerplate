@@ -5,8 +5,11 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-10 max-w-3xl"
-     x-data="healthDashboard()"
-     x-init="init()">
+     x-data="healthDashboard()">
+  {% comment %}
+  No x-init="init()": Alpine already calls a component's own init(), and calling
+  it again starts a second polling interval on every page load.
+  {% endcomment %}
 
   <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
     <h1 class="text-2xl font-bold">{% trans "System Health" %}</h1>
@@ -20,9 +23,9 @@
              'badge-error':   status === 'error',
              'badge-ghost':   status === null
            }">
-        <span x-show="status === 'ok'">● {% trans "Operational" %}</span>
-        <span x-show="status === 'degraded'">● {% trans "Degraded" %}</span>
-        <span x-show="status === 'error'">● {% trans "Error" %}</span>
+        <span x-cloak x-show="status === 'ok'">● {% trans "Operational" %}</span>
+        <span x-cloak x-show="status === 'degraded'">● {% trans "Degraded" %}</span>
+        <span x-cloak x-show="status === 'error'">● {% trans "Error" %}</span>
         <span x-show="status === null">○ {% trans "Loading…" %}</span>
       </div>
 
@@ -43,7 +46,7 @@
 
   {# Last updated + next refresh countdown #}
   <p class="text-sm text-base-content/50 mb-6">
-    <span x-show="lastUpdated">
+    <span x-cloak x-show="lastUpdated">
       {% trans "Updated" %} <span x-text="lastUpdated"></span>
       · {% trans "next refresh in" %} <span x-text="countdown"></span>s
     </span>
@@ -51,7 +54,7 @@
   </p>
 
   {# Fetch error banner #}
-  <div x-show="fetchError" class="alert alert-error mb-6">
+  <div x-cloak x-show="fetchError" class="alert alert-error mb-6">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M12 9v2m0 4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z"/>

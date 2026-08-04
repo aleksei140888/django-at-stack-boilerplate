@@ -28,9 +28,16 @@ coverage.xml
 *.log
 local_settings.py
 db.sqlite3
+# Demo environment database (make demo-up) — rebuilt from the seeder, never shared
+db.demo.sqlite3
+db.demo.sqlite3-wal
+db.demo.sqlite3-shm
 media/
 staticfiles/
 static/dist/
+
+# Scratch output: smoke-run screenshots, profiling dumps
+var/
 
 # Virtual environments
 .env

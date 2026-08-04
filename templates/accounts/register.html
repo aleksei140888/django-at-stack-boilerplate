@@ -26,10 +26,10 @@
         </label>
         {{ field }}
         {% if field.help_text %}
-          <label class="label"><span class="label-text-alt text-base-content/60">{{ field.help_text }}</span></label>
+          <div class="text-xs text-base-content/60 mt-1 [&_ul]:list-disc [&_ul]:ps-5">{{ field.help_text }}</div>
         {% endif %}
         {% if field.errors %}
-          <label class="label"><span class="label-text-alt text-error">{{ field.errors.0 }}</span></label>
+          <div class="text-xs text-error mt-1">{{ field.errors.0 }}</div>
         {% endif %}
       </div>
     {% endif %}
@@ -37,7 +37,9 @@
 
   {# GDPR consent #}
   <div class="form-control mb-6">
-    <label class="label cursor-pointer justify-start gap-3 items-start">
+    {# Plain flex, not `label`: DaisyUI 5 sets white-space: nowrap on .label, #}
+    {# so this multi-line consent text would refuse to wrap on a phone.      #}
+    <label class="flex cursor-pointer justify-start gap-3 items-start">
       {{ form.gdpr_consent }}
       <span class="label-text text-sm">
         {% blocktrans trimmed %}
@@ -48,7 +50,7 @@
       </span>
     </label>
     {% if form.gdpr_consent.errors %}
-      <label class="label"><span class="label-text-alt text-error">{{ form.gdpr_consent.errors.0 }}</span></label>
+      <div class="text-xs text-error mt-1">{{ form.gdpr_consent.errors.0 }}</div>
     {% endif %}
   </div>
 

@@ -1,45 +1,66 @@
 [project]
 name = "django-at-stack"
-version = "0.1.0"
+# YYYY.M.PATCH — the same string must appear in package.json and package-lock.json.
+# `make version-check` (also a pre-commit hook) fails the commit when they drift.
+version = "2026.8.0"
 description = "Django + Alpine.js + Tailwind CSS + DaisyUI — production-ready boilerplate"
 requires-python = ">=3.12"
 
 dependencies = [
-    "Django==5.1.7",
-    "djangorestframework==3.15.2",
-    "django-environ==0.11.2",
-    "psycopg2-binary==2.9.10",
-    "Pillow==11.1.0",
-    "whitenoise==6.8.2",
-    "django-cors-headers==4.6.0",
-    "django-allauth==65.3.0",
-    "django-extensions==3.2.3",
-    "django-filter==24.3",
-    "celery==5.4.0",
-    "redis==5.2.1",
-    "django-redis==5.4.0",
-    "gunicorn==23.0.0",
-    "django-storages==1.14.4",
-    "boto3==1.35.81",
+    "Django>=6.0.7",
+    "djangorestframework>=3.17.1",
+    "django-environ>=0.14.0",
+    # psycopg2 stays the default driver: it is what this stack is running in
+    # production. Switching to `psycopg[binary]` (psycopg 3) works too — see
+    # docs/deployment.md — but it is not what the lockfile has been tested with.
+    "psycopg2-binary>=2.9.12",
+    "Pillow>=12.3.0",
+    "whitenoise>=6.9",
+    "django-cors-headers>=4.9.0",
+    "django-allauth>=65.18.0",
+    "django-extensions>=4.1",
+    "django-filter>=25.2",
+    "celery>=5.6.3",
+    "redis>=8.0.1",
+    "django-redis>=7.0.0",
+    "gunicorn>=26.0.0",
+    "django-storages>=1.14.6",
+    "boto3>=1.43.53",
 ]
 
 [project.optional-dependencies]
 prod = [
-    "sentry-sdk==2.19.2",
+    "sentry-sdk>=2.66.0",
+    # Optional: apps/core/metrics.py degrades to no-ops when it is absent,
+    # so /metrics simply returns 404 instead of breaking the deployment.
+    "prometheus-client>=0.25.0",
 ]
+
+# PEP 735 dependency group — `uv sync` installs it by default, `uv sync --no-dev`
+# (and the prod Docker stage) skips it. With the older `--extra dev` layout,
+# forgetting the flag silently produced an environment without pytest.
+[dependency-groups]
 dev = [
-    "black==24.10.0",
-    "flake8==7.1.1",
-    "isort==5.13.2",
-    "flake8-django==1.4",
-    "flake8-bugbear==24.10.31",
-    "pre-commit==4.0.1",
-    "django-debug-toolbar==4.4.6",
-    "factory-boy==3.3.1",
-    "pytest==8.3.4",
-    "pytest-django==4.9.0",
-    "pytest-cov==6.0.0",
+    "black>=26.5.1",
+    "flake8>=7.3.0",
+    "isort>=8.0.1",
+    "flake8-bugbear>=25.11.29",
+    "pre-commit>=4.6.1",
+    "django-debug-toolbar>=7.0.0",
+    "factory-boy>=3.3.3",
+    "pytest>=9.1.1",
+    "pytest-django>=4.12.0",
+    "pytest-cov>=7.1.0",
+    "pytest-xdist>=3.8.0",
+    # Used by scripts/demo_smoke.py only — browsers are installed on demand
+    # with `uv run playwright install chromium`.
+    "playwright>=1.61.0",
 ]
+
+# The repo is an application, not a distributable package: without this uv looks
+# for a build backend and fails on `uv sync`.
+[tool.uv]
+package = false
 
 # ── Tool configs ───────────────────────────────────────────────────────────────
 
@@ -64,18 +85,26 @@ sections = ["FUTURE", "STDLIB", "THIRDPARTY", "DJANGO", "DRF", "FIRSTPARTY", "LO
 skip_glob = ["*/migrations/*", ".venv/*"]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "config.settings.dev"
+DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
-addopts = ["-v"]
+# Parallel by default. `--dist=loadscope` keeps every test of one module on the
+# same worker, which is what the isolation rules in docs/testing.md assume.
+addopts = [
+    "-v",
+    "--dist=loadscope",
+    "--numprocesses=auto",
+]
 filterwarnings = ["ignore::DeprecationWarning"]
 
 [tool.coverage.run]
 source = ["apps"]
-omit = ["*/migrations/*", "*/tests/*", "*/test_*.py"]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/test_*.py",
+    "*/management/commands/*",
+]
 
 [tool.coverage.report]
 skip_empty = true
 show_missing = true
-
-[tool.uv]
-dev-dependencies = []   # use [project.optional-dependencies] dev instead

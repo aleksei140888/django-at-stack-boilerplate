@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:'uk' }}"
+{% load i18n static %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}"
       data-theme="light"
       x-data="themeManager()"
       x-init="initTheme()"
@@ -8,21 +8,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  {% comment %}
+  Applies the saved theme before first paint. Without it the page renders in the
+  light theme for one frame before Alpine boots, which reads as a flash.
+  {% endcomment %}
+  <script>
+    (function () {
+      var saved = localStorage.getItem("theme");
+      var dark = saved ? saved === "dark"
+                       : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    })();
+  </script>
+
   {% include "partials/_meta_seo.html" %}
 
-  {# Favicon #}
-  <link rel="icon" type="image/svg+xml" href="{% load static %}{% static 'img/favicon.svg' %}">
+  {# Favicon — placeholder artwork in static/img, replace with your own #}
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
   <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
-  <link rel="manifest" href="{% static 'site.webmanifest' %}">
 
-  {# Vite assets #}
-  {% load static %}
-  {% if debug %}
-    <script type="module" src="http://localhost:5173/@vite/client"></script>
-    <script type="module" src="http://localhost:5173/static/src/js/main.js"></script>
-  {% else %}
-    {% include "partials/_vite_assets.html" %}
-  {% endif %}
+  {% if MEDIA_ORIGIN %}<link rel="preconnect" href="{{ MEDIA_ORIGIN }}" crossorigin>{% endif %}
+
+  {% include "partials/_vite_assets.html" %}
 
   {% block extra_head %}{% endblock %}
 </head>

@@ -1,10 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth import (
-    get_user_model,
-    login,
-    logout,
-    update_session_auth_hash,
-)
+from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import (
     PasswordChangeDoneView,
@@ -16,9 +11,11 @@ from django.contrib.auth.views import (
 )
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
+from . import services
 from .forms import (
     CustomPasswordChangeForm,
     CustomPasswordResetForm,
@@ -32,16 +29,40 @@ from .forms import (
 User = get_user_model()
 
 
+def _safe_next(request) -> str:
+    """
+    Where to send the user after login/registration.
+
+    ``?next=`` comes from the query string, so it is attacker-controlled: passing
+    it to redirect() unchecked turns every auth page into an open redirect, which
+    is what phishing links use to borrow this site's domain for credibility.
+    """
+    destination = request.GET.get("next", "")
+    if destination and url_has_allowed_host_and_scheme(
+        destination, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return destination
+    return "/"
+
+
 def register_view(request):
     if request.user.is_authenticated:
         return redirect("/")
 
     form = RegisterForm(request.POST or None)
     if form.is_valid():
-        user = form.save()
-        login(request, user)
+        user = services.register_user(
+            email=form.cleaned_data["email"],
+            password=form.cleaned_data["password1"],
+            first_name=form.cleaned_data.get("first_name", ""),
+            last_name=form.cleaned_data.get("last_name", ""),
+        )
+        # The backend has to be named explicitly: with allauth installed there
+        # are two of them, and login() refuses to guess for a user that did not
+        # come from authenticate().
+        login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         messages.success(request, _("Welcome! Your account has been created."))
-        return redirect(request.GET.get("next", "/"))
+        return redirect(_safe_next(request))
 
     return render(
         request,
@@ -65,8 +86,9 @@ def login_view(request):
         if not remember_me:
             request.session.set_expiry(0)
         login(request, user)
+        services.touch_last_seen(user)
         messages.success(request, _("Welcome back!"))
-        return redirect(request.GET.get("next", "/"))
+        return redirect(_safe_next(request))
 
     return render(
         request,
@@ -90,7 +112,7 @@ def logout_view(request):
 def profile_view(request):
     form = ProfileForm(request.POST or None, request.FILES or None, instance=request.user)
     if form.is_valid():
-        form.save()
+        services.update_profile(request.user, **form.cleaned_data)
         messages.success(request, _("Profile updated."))
         return redirect("accounts:profile")
 
@@ -110,8 +132,7 @@ def delete_account_view(request):
     if form.is_valid():
         user = request.user
         logout(request)
-        user.is_active = False
-        user.save()
+        services.deactivate_account(user)
         messages.info(request, _("Your account has been deactivated."))
         return redirect("/")
 

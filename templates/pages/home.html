@@ -30,10 +30,10 @@
 <section class="hero min-h-[60vh] bg-gradient-to-br from-primary/10 to-secondary/10">
   <div class="hero-content text-center">
     <div class="max-w-2xl">
-      <h1 class="text-5xl font-bold mb-6">
+      <h1 class="text-4xl sm:text-5xl font-bold mb-6">
         Django <span class="text-primary">AT</span> Stack
       </h1>
-      <p class="text-xl text-base-content/70 mb-8">
+      <p class="text-lg sm:text-xl text-base-content/70 mb-8">
         {% trans "Django + Alpine.js + Tailwind CSS + DaisyUI — production-ready boilerplate for SSR web apps." %}
       </p>
       <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -60,12 +60,11 @@
     <h2 class="text-3xl font-bold text-center mb-12">{% trans "What's included" %}</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-      {% with features=features_list %}
       <div class="card bg-base-200 shadow-md hover:shadow-lg transition-shadow">
         <div class="card-body">
           <h3 class="card-title text-lg">
             <span class="text-primary text-2xl" aria-hidden="true">🐍</span>
-            Django 5 + DRF
+            Django 6 + DRF
           </h3>
           <p class="text-base-content/70 text-sm">{% trans "Full-featured Django backend with REST Framework for APIs." %}</p>
         </div>
@@ -120,7 +119,6 @@
           <p class="text-base-content/70 text-sm">{% trans "Docker + docker-compose for dev and production with PostgreSQL." %}</p>
         </div>
       </div>
-      {% endwith %}
     </div>
   </div>
 </section>
@@ -131,12 +129,25 @@
     <h2 class="text-2xl font-bold mb-4">{% trans "Alpine.js example: live search" %}</h2>
     <p class="text-base-content/60 mb-8 text-sm">{% trans "Type to filter items below — no page reload." %}</p>
 
-    <div x-data="searchDemo()">
+    <div x-data="searchDemo([
+      'Django 6 + DRF',
+      'Alpine.js 3',
+      'Tailwind CSS 4 + DaisyUI 5',
+      'Vite build',
+      'PostgreSQL + Redis + Celery',
+      'Docker &amp; docker-compose',
+      'Email authentication',
+      'SEO: sitemap, Open Graph, schema.org',
+      'Dark / light themes',
+      'Health checks and metrics',
+      'Demo environment with seed data',
+      'CI: lint, tests, version sync'
+    ])">
       <input
         type="search"
         x-model="query"
         placeholder="{% trans 'Search features...' %}"
-        class="input input-bordered w-full mb-4"
+        class="input w-full mb-4"
         aria-label="{% trans 'Search features' %}"
       >
       <ul class="space-y-2 text-left">

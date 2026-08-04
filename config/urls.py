@@ -5,6 +5,7 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 from django.views.generic import TemplateView
 
+from apps.core.api_views import metrics_view
 from apps.core.sitemaps import sitemaps
 from apps.core.views import health_page
 
@@ -13,6 +14,8 @@ urlpatterns = [
     path("accounts/", include("apps.accounts.urls")),
     path("api/v1/", include("apps.core.api_urls")),
     path("health/", health_page, name="health"),
+    # 404 unless METRICS_TOKEN is configured — see apps/core/api_views.py.
+    path("metrics", metrics_view, name="metrics"),
     path(
         "sitemap.xml",
         sitemap,
@@ -28,11 +31,11 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    import debug_toolbar
-
-    urlpatterns = [
-        path("__debug__/", include(debug_toolbar.urls)),
-    ] + urlpatterns
+    # Guarded by the app being installed, not by DEBUG alone: config.settings.demo
+    # can drop the toolbar (DEMO_DEBUG_TOOLBAR=False) while keeping DEBUG on, and
+    # importing it then raises at URLconf load time.
+    if "debug_toolbar" in settings.INSTALLED_APPS:
+        urlpatterns = [path("__debug__/", include("debug_toolbar.urls"))] + urlpatterns
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 handler404 = "apps.core.views.handler404"

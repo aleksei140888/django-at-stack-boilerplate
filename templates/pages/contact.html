@@ -31,7 +31,7 @@
               <span class="label-text">{{ field.label }} <span class="text-error">*</span></span>
             </label>
             {{ field }}
-            {% if field.errors %}<label class="label"><span class="label-text-alt text-error">{{ field.errors.0 }}</span></label>{% endif %}
+            {% if field.errors %}<div class="text-xs text-error mt-1">{{ field.errors.0 }}</div>{% endif %}
           </div>
         {% endfor %}
 

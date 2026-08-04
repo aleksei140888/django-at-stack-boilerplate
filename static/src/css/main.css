@@ -1,32 +1,47 @@
 /* Tailwind CSS v4 — single import, no config file needed */
 @import "tailwindcss";
 
-/* DaisyUI plugin */
+/* Where to look for class names. Tailwind v4 scans the directory of the CSS file
+   by default, which here is the Vite root (static/src) — it contains no
+   templates, so without these the build emits base styles and DaisyUI themes but
+   not a single utility, and the site renders as unstyled HTML with no error. */
+@source "../../../templates";
+@source "../../../apps";
+@source "../js";
+
+/* DaisyUI 5. `--default` / `--prefersdark` decide which theme applies when the
+   page has no data-theme yet; base.html sets one before first paint anyway. */
 @plugin "daisyui" {
-  themes: light, dark;
+  themes: light --default, dark --prefersdark;
 }
 
 /* ===== Base styles ===== */
 @layer base {
-  /* Smooth font rendering */
   body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Focus styles for accessibility */
   :focus-visible {
-    outline: 2px solid oklch(var(--p));
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
 
-  /* Typography base */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-weight: 700;
     line-height: 1.2;
   }
 
-  /* Form inputs using DaisyUI classes — styled consistently */
+  /* Django renders form widgets without CSS classes, so the base look is applied
+     by element selector. Written as plain properties on purpose: `@apply input`
+     of a DaisyUI component class inside `@layer base` resolves to an empty rule
+     under Tailwind v4 + DaisyUI 5 (the component lives in its own nested
+     layer), and the inputs end up unstyled with no error anywhere. */
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -34,43 +49,63 @@
   input[type="url"],
   input[type="tel"],
   input[type="number"],
+  input[type="date"],
   textarea,
   select {
-    @apply input input-bordered w-full;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-base-300);
+    border-radius: var(--radius-field, 0.5rem);
+    background-color: var(--color-base-100);
+    color: var(--color-base-content);
   }
 
-  input[type="checkbox"] {
-    @apply checkbox;
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="search"]:focus,
+  input[type="url"]:focus,
+  input[type="tel"]:focus,
+  input[type="number"]:focus,
+  input[type="date"]:focus,
+  textarea:focus,
+  select:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
   }
 
+  input[type="checkbox"],
   input[type="radio"] {
-    @apply radio;
+    accent-color: var(--color-primary);
+    width: 1.15rem;
+    height: 1.15rem;
   }
 }
 
 /* ===== Utilities ===== */
 @layer utilities {
-  /* Prose styles for article content */
+  /* Elements that are visible by default and hidden by an Alpine x-show would
+     flash in their visible state until Alpine initialises. Put x-cloak on every
+     such element; this rule is what makes it work. */
+  [x-cloak] {
+    display: none !important;
+  }
+
   .prose {
-    color: oklch(var(--bc));
+    color: var(--color-base-content);
   }
 
   .prose h1,
   .prose h2,
   .prose h3 {
-    color: oklch(var(--bc));
+    color: var(--color-base-content);
   }
 
   .prose a {
-    color: oklch(var(--p));
+    color: var(--color-primary);
     text-decoration: underline;
   }
 
-  .prose a:hover {
-    color: oklch(var(--pf));
-  }
-
-  /* Screen reader only */
   .sr-only {
     position: absolute;
     width: 1px;
